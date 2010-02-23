@@ -118,6 +118,13 @@ def test_click():
         '/page2'
     )
 
+def test_css_selectors_are_equivalent_to_xpath():
+    page = TestAgent(dispatcher).get('/page1')
+    assert_equal(
+        list(page.find('//a')),
+        list(page.findcss('a'))
+    )
+
 def test_get_with_query_is_correctly_handled():
     page = TestAgent(dispatcher).get('/getform?x=1')
     assert_equal(page.body, "x:<1>")

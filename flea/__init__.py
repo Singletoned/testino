@@ -6,6 +6,7 @@ import re
 from functools import wraps
 
 from lxml.html import fromstring, tostring
+from lxml.cssselect import CSSSelector
 
 from pesto.testing import MockResponse
 from pesto.request import Request
@@ -83,6 +84,14 @@ class ElementWrapper(object):
     @when("//input")
     def _set_value(self, value):
         self.element.attrib['value'] = value
+
+    def __eq__(self, other):
+        if self.__class__ is not other.__class__:
+            return False
+        return (
+            self.element is other.element
+            and self.agent is other.agent
+        )
 
     #@when("//input[@type='radio']")
     #def _get_value(self):
@@ -405,6 +414,16 @@ class TestAgent(object):
         )
 
     __getitem__ = find
+
+    def findcss(self, selector):
+        """
+        Return elements matching the given CSS Selector (see
+        ``lxml.cssselect`` for documentation on the ``CSSSelector`` class.
+        """
+        selector = CSSSelector(selector)
+        return ResultWrapper(
+            ElementWrapper(self, el) for el in selector(self.lxmldoc)
+        )
 
     def click(self, path, follow=False, **kwargs):
         return self.find(path, **kwargs).click(follow=follow)
