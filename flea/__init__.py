@@ -345,6 +345,13 @@ class TestAgent(object):
             if path.startswith(morsel['path'])
         )
 
+        if '?' in environ['PATH_INFO']:
+            environ['PATH_INFO'], querystring = environ['PATH_INFO'].split('?', 1)
+            if environ.get('QUERY_STRING'):
+                environ['QUERY_STRING'] += querystring
+            else:
+                environ['QUERY_STRING'] = querystring
+
         response = self.response_class.from_wsgi(self.app, environ, self.start_response)
         response = self.__class__(self.app, Request(environ), response, self.cookies, validate_wsgi=False)
         if follow:
@@ -355,12 +362,6 @@ class TestAgent(object):
         """
         Make a GET request to the application and return the response.
         """
-        if '?' in PATH_INFO:
-            PATH_INFO, querystring = PATH_INFO.split('?', 1)
-            if data is None:
-                data = MultiDict()
-            data.update(parse_querystring(querystring))
-
         if data is not None:
             kwargs.setdefault('QUERY_STRING', make_query(data, charset=charset))
 
