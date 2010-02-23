@@ -101,20 +101,18 @@ class testapp(object):
     @match('/cookies', 'GET')
     @match('/<path:path>/cookies', 'GET')
     def listcookies(request, path=None):
-        print request.environ
         return Response([
                 '; '.join("%s:<%s>" % (name, value.value) for (name, value) in sorted(request.cookies.allitems()))
         ])
 
-
 def test_click():
     page = TestAgent(dispatcher).get('/page1')
     assert_equal(
-        page.click("//a[1]").request.path_info,
+        page["//a[1]"].click().request.path_info,
         '/page1'
     )
     assert_equal(
-        page.click("//a[2]").request.path_info,
+        page["//a[2]"].click().request.path_info,
         '/page2'
     )
 
