@@ -2,6 +2,7 @@ from flea import TestAgent
 from nose.tools import assert_equal
 
 from pesto import dispatcher_app, Response
+from pesto.request import Request
 from pesto.wsgiutils import with_request_args
 dispatcher = dispatcher_app()
 match = dispatcher.match
@@ -12,6 +13,28 @@ def page(html):
             return Response(html % (func(request, *args, **kwargs)))
         return page
     return page
+
+def makeformapp(formhtml):
+    """
+    Return a WSGI application that responds to GET requests with the given
+    HTML, and POST requests with a dump of the posted info
+    """
+    def app(environ, start_response):
+
+        if environ['REQUEST_METHOD'] == 'GET':
+            return Response(
+                ['<html><body><form method="POST">%s</form></body></html>' % formhtml]
+            )(environ, start_response)
+
+        return Response([
+                '; '.join(
+                    "%s:<%s>" % (name, value)
+                    for (name, value) in sorted(Request(environ).form.allitems())
+                )
+        ])(environ, start_response)
+
+    return app
+
 
 class testapp(object):
 
@@ -58,28 +81,20 @@ class testapp(object):
           </form>
           </body></html>
     ''')
-    def form_text(request):
+    def form_checkbox(request):
         return {}
 
-    @match('/form', 'GET')
+    @match('/form-textarea', 'GET')
     @page('''
           <html><body>
           <form method="POST" action="/postform">
-            <input name="a" value="a" type="text" />
-            <input name="a" value="" type="text" />
-            <input name="b" value="" />
-            <input name="c" value="1" type="checkbox" />
-            <input name="c" value="2" type="checkbox" />
-            <input name="r" value="1" type="radio" />
-            <input name="r" value="2" type="radio" />
             <textarea name="t"></textarea>
-            <input type="submit" name="s" value="s1"/>
-            <input type="submit" name="s" value="s2"/>
-            </form>
+          </form>
           </body></html>
     ''')
-    def form(request):
+    def form_textarea(request):
         return {}
+
 
     @match('/postform', 'POST')
     def form_submit(request):
@@ -171,6 +186,71 @@ def test_form_checkbox():
         form.submit().body,
         "a:<1>; a:<2>; b:<B>"
     )
+
+def test_form_textarea():
+    form_page = TestAgent(dispatcher).get('/form-textarea')
+    form_page['//textarea'].value = 'test'
+    assert_equal(
+        form_page['//textarea'].form.submit().body,
+        't:<test>'
+    )
+
+def test_form_select():
+    app = makeformapp("""
+        <select name="s">
+        <option value="o1"></option>
+        <option value="o2"></option>
+        </select>
+    """)
+    r = TestAgent(app).get('/')
+    r['//select'].value = 'o2'
+    assert_equal(r['//form'].submit().body, 's:<o2>')
+
+def test_form_select_multiple():
+    app = makeformapp("""
+        <select name="s" multiple="">
+        <option value="o1"></option>
+        <option value="o2"></option>
+        <option value="o3"></option>
+        </select>
+    """)
+    r = TestAgent(app).get('/')
+    r['//select'].value = ['o1', 'o3']
+    assert_equal(r['//form'].submit().body, 's:<o1>; s:<o3>')
+
+
+def test_form_disabled():
+    makeformapp("""
+    """)
+
+def test_form_submit_button():
+    app = makeformapp('''
+        <input id="1" type="submit" name="s" value="1"/>
+        <input id="2" type="submit" name="s" value="2"/>
+        <input id="3" type="submit" name="t" value="3"/>
+        <input id="4" type="image" name="u" value="4"/>
+        <button id="5" type="submit" name="v" value="5">click me!</button>
+        <button id="6" name="w" value="6">click me!</button>
+        <button id="7" type="button" name="x" value="7">don't click me!</button>
+    ''')
+    form_page = TestAgent(app).get('/')
+
+
+    assert_equal(form_page['//form'].submit().body, '')
+
+    assert_equal(form_page.findcss('#1').submit().body, 's:<1>')
+    assert_equal(form_page.findcss('#2').submit().body, 's:<2>')
+    assert_equal(form_page.findcss('#3').submit().body, 't:<3>')
+    assert_equal(form_page.findcss('#4').submit().body, 'u:<4>; u.x:<1>; u.y:<1>')
+    assert_equal(form_page.findcss('#5').submit().body, 'v:<5>')
+    assert_equal(form_page.findcss('#6').submit().body, 'w:<6>')
+    try:
+        form_page.findcss('#7').submit()
+    except NotImplementedError:
+        pass
+    else:
+        raise AssertionError("Shouldn't be able to submit a non-submit button")
+
 
 def test_form_submit_follows_redirect():
     form_page = TestAgent(dispatcher).get('/form-text')

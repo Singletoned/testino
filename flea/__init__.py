@@ -7,6 +7,7 @@ from functools import wraps
 
 from lxml.html import fromstring, tostring
 from lxml.cssselect import CSSSelector
+from lxml.etree import XPath
 
 from pesto.testing import MockResponse
 from pesto.request import Request
@@ -24,8 +25,8 @@ class XPathMultiMethod(object):
     def __call__(self, *args, **kwargs):
         el = args[0]
         el = getattr(el, 'element', el)
-        for expr, func in self.endpoints:
-            if el in el.xpath(expr):
+        for xpath, func in self.endpoints:
+            if el in xpath(el):
                 return func(*args, **kwargs)
         raise NotImplementedError("Function not implemented for element %r" % (el,))
 
@@ -37,7 +38,12 @@ def when(xpath_expr):
         if getattr(func, '__wrapped__', None):
             func = getattr(func, '__wrapped__')
         multimethod = xpath_registry.setdefault(func.__name__, XPathMultiMethod())
-        multimethod.register(xpath_expr, func)
+        multimethod.register(
+            XPath(
+                '|'.join('../%s' % item for item in xpath_expr.split('|'))
+            ),
+            func
+        )
         wrapped = wraps(func)(
             lambda self, *args, **kwargs: multimethod(self, *args, **kwargs)
         )
@@ -73,21 +79,65 @@ class ElementWrapper(object):
 
         return self.__class__(self.agent, element)
 
-    @when("//a[@href]")
+    @when("a[@href]")
     def click(self, follow=False):
         return self.agent._click(self, follow=follow)
 
-    @when("//input[@type='checkbox']")
+    @when("input[@type='checkbox']")
     def _get_value(self):
         return self.element.attrib.get('value', 'On')
 
-    @when("//input")
+    @when("input|button")
     def _get_value(self):
         return self.element.attrib.get('value', '')
 
-    @when("//input")
+    @when("input|button")
     def _set_value(self, value):
         self.element.attrib['value'] = value
+
+    @when("textarea")
+    def _get_value(self):
+        return self.element.text
+
+    @when("textarea")
+    def _set_value(self, value):
+        self.element.text = value
+
+    @when("select[@multiple]")
+    def _get_value(self):
+        return [item.attrib.get('value') for item in self.element.xpath('./option[@selected]')]
+
+    @when("select[@multiple]")
+    def _set_value(self, values):
+        for el in self.element.xpath('./option'):
+            if 'selected' in el.attrib:
+                del el.attrib['selected']
+        for value in values:
+            try:
+                self.element.xpath('./option[@value=$value]', value=value)[0].attrib['selected'] = ''
+            except IndexError:
+                raise ValueError("Value %s not present in select options")
+
+    @when("select")
+    def _get_value(self):
+        try:
+            return self.element.xpath('./option[@selected]')[0].attrib['value']
+        except (KeyError, IndexError):
+            return None
+
+    @when("select")
+    def _set_value(self, value):
+        for el in self.element.xpath('./option'):
+            if 'selected' in el.attrib:
+                del el.attrib['selected']
+        try:
+            self.element.xpath('./option[@value=$value]', value=value)[0].attrib['selected'] = ''
+        except IndexError:
+            raise ValueError("Value %s not present in select options")
+
+    @when("textarea")
+    def _set_value(self, value):
+        self.element.text = value
 
     def __eq__(self, other):
         if self.__class__ is not other.__class__:
@@ -97,7 +147,7 @@ class ElementWrapper(object):
             and self.agent is other.agent
         )
 
-    #@when("//input[@type='radio']")
+    #@when("input[@type='radio']")
     #def _get_value(self):
     #    print "_get_value", self
     #    return list(
@@ -107,7 +157,7 @@ class ElementWrapper(object):
     #        ) if item is not None
     #    )
 
-    #@when("//input[@type='radio']")
+    #@when("input[@type='radio']")
     #def _set_value(self):
     #    for item in self.form.xpath("//input[@type='radio' and @name=$name]", name=attrib['name']):
     #        if item.attrib['value'] == value:
@@ -118,13 +168,13 @@ class ElementWrapper(object):
 
     value = property(_get_value, _set_value)
 
-    @when("//input[@type='radio' or @type='checkbox']")
+    @when("input[@type='radio' or @type='checkbox']")
     def submit_value(self):
         if 'checked' in self.element.attrib:
             return self.value
         return None
 
-    @when("//input[@type='text' or @type='password']")
+    @when("input[@type != 'submit' and @type != 'image' and @type != 'reset']|select|textarea")
     def submit_value(self):
         return self.value
 
@@ -145,20 +195,34 @@ class ElementWrapper(object):
 
 
     @property
-    @when("//input|textarea|button|select|form")
+    @when("input|textarea|button|select|form")
     def form(self):
         return self.__class__(self.agent, self.element.xpath("./ancestor-or-self::form[1]")[0])
 
-    @when("//form")
+    @when("input[@type='submit' or @type='image']|button[@type='submit' or not(@type)]")
     def submit(self, follow=False):
+        return self.form.submit(self, follow)
+
+    @when("form")
+    def submit(self, button=None, follow=False):
         method = self.element.attrib['method'].upper()
         data = []
-        for input in (ElementWrapper(self.agent, el) for el in self.element.xpath('.//input')):
+
+        if button and 'name' in button.attrib:
+            data.append((button.attrib['name'], button.value))
+            if button.element.attrib.get('type') == 'image':
+                data.append((button.attrib['name'] + '.x', 1))
+                data.append((button.attrib['name'] + '.y', 1))
+
+        for input in (ElementWrapper(self.agent, el) for el in self.element.xpath('.//input|textarea|select')):
             try:
                 name = input.attrib['name']
             except KeyError:
                 continue
-            value = input.submit_value
+            try:
+                value = input.submit_value
+            except NotImplementedError:
+                continue
             if value is None:
                 continue
             elif isinstance(value, basestring):
