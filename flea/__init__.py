@@ -187,6 +187,19 @@ class ElementWrapper(object):
     @when("form")
     def submit(self, button=None, follow=False):
         method = self.element.attrib['method'].upper()
+        data = self.submit_data(button)
+        path = uri_join_same_server(
+            self.agent.request.request_uri,
+            self.element.attrib.get('action', self.agent.request.request_path)
+        )
+        return {
+            ('GET', None): self.agent.get,
+            ('POST', None): self.agent.post,
+            ('POST', 'multipart/form-data'): self.agent.post_multipart,
+        }[(method, self.attrib.get('encoding'))](path, data, follow=follow)
+
+    @when("form")
+    def submit_data(self, button=None):
         data = []
 
         if button and 'name' in button.attrib:
@@ -195,7 +208,7 @@ class ElementWrapper(object):
                 data.append((button.attrib['name'] + '.x', 1))
                 data.append((button.attrib['name'] + '.y', 1))
 
-        for input in (ElementWrapper(self.agent, el) for el in self.element.xpath('.//input|textarea|select')):
+        for input in (ElementWrapper(self.agent, el) for el in self.element.xpath('.//input|.//textarea|.//select')):
             try:
                 name = input.attrib['name']
             except KeyError:
@@ -210,15 +223,8 @@ class ElementWrapper(object):
                 data.append((name, value))
             else:
                 data += [(name, v) for v in value]
-        path = uri_join_same_server(
-            self.agent.request.request_uri,
-            self.element.attrib.get('action', self.agent.request.request_path)
-        )
-        return {
-            ('GET', None): self.agent.get,
-            ('POST', None): self.agent.post,
-            ('POST', 'multipart/form-data'): self.agent.post_multipart,
-        }[(method, self.attrib.get('encoding'))](path, data, follow=follow)
+
+        return data
 
 class ResultWrapper(list):
     """
