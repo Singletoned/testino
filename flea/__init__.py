@@ -46,6 +46,10 @@ def when(xpath_expr):
     return when
 
 class ElementWrapper(object):
+    """
+    Wrapper for an ``lxml.etree`` element, providing context of the
+    ``TestAgent`` object associated with the request for the document.
+    """
 
     def __init__(self, agent, element):
         self.agent = agent
@@ -406,6 +410,9 @@ class TestAgent(object):
         return self._lxmldoc
 
     def find(self, path, **kwargs):
+        """
+        Return elements matching the given xpath expression.
+        """
         result = self.lxmldoc.xpath(path, **kwargs)
         if not isinstance(result, list):
             raise ValueError("XPath expression %r does not yield a list of elements" % path)
