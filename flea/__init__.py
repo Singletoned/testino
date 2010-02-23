@@ -221,7 +221,23 @@ class ElementWrapper(object):
         }[(method, self.attrib.get('encoding'))](path, data, follow=follow)
 
 class ResultWrapper(list):
+    """
+    Wrap a list of elements (``ElementWrapper`` objects) returned from an xpath
+    query, providing reasonable default behaviour for testing.
 
+    ``ResultWrapper`` objects act like lists when indexed numerically::
+
+        >>> r = ResultWrapper(['fred', 'jim'])
+        >>> r[0]
+        'fred'
+
+    For any non-numeric item/attribute access, the first item in the result
+    list is used:
+
+        >>> r.upper()
+        'FRED'
+
+    """
     def __init__(self, elements):
         super(ResultWrapper, self).__init__(elements)
 
