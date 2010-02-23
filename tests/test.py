@@ -174,6 +174,20 @@ def test_form_checkbox():
         "a:<1>; a:<2>; b:<B>"
     )
 
+def test_form_submit_follows_redirect():
+    form_page = TestAgent(dispatcher).get('/form-text')
+    form = form_page['//form']
+    form.attrib['method'] = 'get'
+    form.attrib['action'] = '/redirect1'
+    assert_equal(
+        form.submit(follow=True).request.path_info,
+        '/page1'
+    )
+
+def test_form_attribute_returns_parent_form():
+    form_page = TestAgent(dispatcher).get('/form-text')
+    assert_equal(form_page['//input[@name="a"]'].form, form_page['//form'][0])
+
 def test_cookies_are_received():
     response = TestAgent(dispatcher).get('/setcookie?name=foo;value=bar;path=/')
     assert_equal(response.cookies['foo'].value, 'bar')

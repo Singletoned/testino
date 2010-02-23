@@ -140,10 +140,10 @@ class ElementWrapper(object):
     checked = property(_get_checked, _set_checked)
 
 
-
-    @when("//input|textarea|button")
+    @property
+    @when("//input|textarea|button|select|form")
     def form(self):
-        return self.__class__(self.agent, self.element.xpath("../form[1]")[0])
+        return self.__class__(self.agent, self.element.xpath("./ancestor-or-self::form[1]")[0])
 
     @when("//form")
     def submit(self, follow=False):
