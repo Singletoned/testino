@@ -14,16 +14,20 @@ def page(html):
         return page
     return page
 
-def makeformapp(formhtml):
+def makeformapp(formhtml, action=None):
     """
     Return a WSGI application that responds to GET requests with the given
     HTML, and POST requests with a dump of the posted info
     """
+
+    if action is None:
+        action = "/"
+
     def app(environ, start_response):
 
         if environ['REQUEST_METHOD'] == 'GET':
             return Response(
-                ['<html><body><form method="POST">%s</form></body></html>' % formhtml]
+                ['<html><body><form method="POST" action="%s">%s</form></body></html>' % (action, formhtml)]
             )(environ, start_response)
 
         return Response([
@@ -251,6 +255,10 @@ def test_form_submit_button():
     else:
         raise AssertionError("Shouldn't be able to submit a non-submit button")
 
+def test_form_action_fully_qualified_uri_doesnt_error():
+    app = makeformapp("", action='http://localhost/')
+    r = TestAgent(app).get('/')
+    assert_equal(r['//form'].submit().body, '')
 
 def test_form_submit_follows_redirect():
     form_page = TestAgent(dispatcher).get('/form-text')

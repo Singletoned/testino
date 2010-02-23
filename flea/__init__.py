@@ -210,7 +210,10 @@ class ElementWrapper(object):
                 data.append((name, value))
             else:
                 data += [(name, v) for v in value]
-        path = self.element.attrib.get('action', self.agent.request.request_path)
+        path = uri_join_same_server(
+            self.agent.request.request_uri,
+            self.element.attrib.get('action', self.agent.request.request_path)
+        )
         return {
             ('GET', None): self.agent.get,
             ('POST', None): self.agent.post,
@@ -477,7 +480,10 @@ class TestAgent(object):
 
     def _click(self, element, follow=False):
         return self.get(
-            uri_join_same_server(self.request.request_uri, element.attrib['href']),
+            uri_join_same_server(
+                self.request.request_uri,
+                element.attrib['href']
+            ),
             follow=follow
         )
 
