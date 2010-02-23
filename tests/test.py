@@ -36,7 +36,7 @@ class testapp(object):
     @match('/form-text', 'GET')
     @page('''
           <html><body>
-          <form method="POST" action="/form">
+          <form method="POST" action="/postform">
             <input name="a" value="a" type="text" />
             <input name="a" value="" type="text" />
             <input name="b" value="" type="text" />
@@ -49,7 +49,7 @@ class testapp(object):
     @match('/form-checkbox', 'GET')
     @page('''
           <html><body>
-          <form method="POST" action="/form">
+          <form method="POST" action="/postform">
             <input name="a" value="1" type="checkbox" />
             <input name="a" value="2" type="checkbox" />
             <input name="b" value="A" type="checkbox" checked="checked" />
@@ -63,7 +63,7 @@ class testapp(object):
     @match('/form', 'GET')
     @page('''
           <html><body>
-          <form method="POST" action="/form">
+          <form method="POST" action="/postform">
             <input name="a" value="a" type="text" />
             <input name="a" value="" type="text" />
             <input name="b" value="" />
@@ -80,10 +80,16 @@ class testapp(object):
     def form(request):
         return {}
 
-    @match('/form', 'POST')
+    @match('/postform', 'POST')
     def form_submit(request):
         return Response([
                 '; '.join("%s:<%s>" % (name, value) for (name, value) in sorted(request.form.allitems()))
+        ])
+
+    @match('/getform', 'GET')
+    def form_submit(request):
+        return Response([
+                '; '.join("%s:<%s>" % (name, value) for (name, value) in sorted(request.query.allitems()))
         ])
 
 def test_click():
@@ -96,6 +102,10 @@ def test_click():
         page.click("//a[2]").request.path_info,
         '/page2'
     )
+
+def test_get_with_query_is_correctly_handled():
+    page = TestAgent(dispatcher).get('/getform?x=1')
+    assert_equal(page.body, "x:<1>")
 
 def test_click_follows_redirect():
 

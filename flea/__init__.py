@@ -9,6 +9,8 @@ from lxml.html import fromstring, tostring
 from pesto.testing import MockResponse
 from pesto.request import Request
 from pesto.wsgiutils import uri_join, make_query
+from pesto.httputils import parse_querystring
+from pesto.utils import MultiDict
 
 xpath_registry = {}
 
@@ -261,6 +263,12 @@ class TestAgent(object):
         """
         Make a GET request to the application and return the response.
         """
+        if '?' in PATH_INFO:
+            PATH_INFO, querystring = PATH_INFO.split('?', 1)
+            if data is None:
+                data = MultiDict()
+            data.update(parse_querystring(querystring))
+
         if data is not None:
             kwargs.setdefault('QUERY_STRING', make_query(data, charset=charset))
 
