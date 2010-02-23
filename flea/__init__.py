@@ -27,7 +27,7 @@ class XPathMultiMethod(object):
         for expr, func in self.endpoints:
             if el in el.xpath(expr):
                 return func(*args, **kwargs)
-        raise Exception("Couldn't find a match for element %r in %r" % (el, self.endpoints))
+        raise NotImplementedError("Function not implemented for element %r" % (el,))
 
     def register(self, xpath, func):
         self.endpoints.append((xpath, func))
