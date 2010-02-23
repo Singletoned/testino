@@ -1,6 +1,7 @@
 from wsgiref.validate import validator as wsgi_validator
 from cStringIO import StringIO
 from urlparse import urlparse, urlunparse
+from Cookie import BaseCookie
 import re
 from functools import wraps
 
@@ -212,12 +213,18 @@ class TestAgent(object):
         'wsgi.run_once': False,
     }
 
-    def __init__(self, app, request=None, response=None, validate_wsgi=True):
+    def __init__(self, app, request=None, response=None, cookies=None, validate_wsgi=True):
         if validate_wsgi:
             app = wsgi_validator(app)
         self.app = app
         self.request = request
         self.response = response
+        if cookies:
+            self.cookies = cookies
+        else:
+            self.cookies = BaseCookie()
+        if response:
+            self.cookies.update(parse_cookies(response))
 
     @classmethod
     def make_environ(cls, REQUEST_METHOD='GET', PATH_INFO='', wsgi_input='', **kwargs):
@@ -253,8 +260,15 @@ class TestAgent(object):
         return environ
 
     def _request(self, environ, follow=False):
+        path = environ['SCRIPT_NAME'] + environ['PATH_INFO']
+        environ['HTTP_COOKIE'] = '; '.join(
+            '%s=%s' % (key, morsel.value) 
+            for key, morsel in self.cookies.items()
+            if path.startswith(morsel['path'])
+        )
+
         response = self.response_class.from_wsgi(self.app, environ, self.start_response)
-        response = self.__class__(self.app, Request(environ), response, validate_wsgi=False)
+        response = self.__class__(self.app, Request(environ), response, self.cookies, validate_wsgi=False)
         if follow:
             return follow_redirects(response)
         return response
@@ -458,4 +472,15 @@ def uri_join_same_server(baseuri, uri):
     if urlparse(baseuri)[:2] != uri[:2]:
         raise ValueError("URI links to another server: %s" % (urlunparse(uri),))
     return urlunparse((None, None) + uri[2:])
+
+def parse_cookies(response):
+    """
+    Return a ``Cookie.BaseCookie`` object populated from cookies parsed from
+    the response object
+    """
+    base_cookie = BaseCookie()
+    for item in response.get_headers('Set-Cookie'):
+        base_cookie.load(item)
+    return base_cookie
+
 

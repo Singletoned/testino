@@ -2,6 +2,7 @@ from flea import TestAgent
 from nose.tools import assert_equal
 
 from pesto import dispatcher_app, Response
+from pesto.wsgiutils import with_request_args
 dispatcher = dispatcher_app()
 match = dispatcher.match
 
@@ -92,6 +93,20 @@ class testapp(object):
                 '; '.join("%s:<%s>" % (name, value) for (name, value) in sorted(request.query.allitems()))
         ])
 
+    @match('/setcookie', 'GET')
+    @with_request_args(name=unicode, value=unicode, path=unicode)
+    def setcookie(request, name='foo', value='bar', path='/'):
+        return Response(['ok']).add_cookie(name, value, path=path)
+
+    @match('/cookies', 'GET')
+    @match('/<path:path>/cookies', 'GET')
+    def listcookies(request, path=None):
+        print request.environ
+        return Response([
+                '; '.join("%s:<%s>" % (name, value.value) for (name, value) in sorted(request.cookies.allitems()))
+        ])
+
+
 def test_click():
     page = TestAgent(dispatcher).get('/page1')
     assert_equal(
@@ -151,4 +166,26 @@ def test_form_checkbox():
         form.submit().body,
         "a:<1>; a:<2>; b:<B>"
     )
+
+def test_cookies_are_received():
+    response = TestAgent(dispatcher).get('/setcookie?name=foo;value=bar;path=/')
+    assert_equal(response.cookies['foo'].value, 'bar')
+    assert_equal(response.cookies['foo']['path'], '/')
+
+def test_cookies_are_resent():
+    response = TestAgent(dispatcher).get('/setcookie?name=foo;value=bar;path=/')
+    response = response.get('/cookies')
+    assert_equal(response.body, 'foo:<bar>')
+
+def test_cookie_paths_are_observed():
+    response = TestAgent(dispatcher).get('/setcookie?name=doobedo;value=dowop;path=/')
+    response = response.get('/setcookie?name=dowahdowah;value=beebeebo;path=/private')
+
+    response = response.get('/cookies')
+    assert_equal(response.body, 'doobedo:<dowop>')
+
+    response = response.get('/private/cookies')
+    assert_equal(response.body, 'doobedo:<dowop>; dowahdowah:<beebeebo>')
+
+
 
