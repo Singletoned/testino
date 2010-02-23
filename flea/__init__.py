@@ -172,11 +172,6 @@ class ElementWrapper(object):
             ('POST', 'multipart/form-data'): self.agent.post_multipart,
         }[(method, self.attrib.get('encoding'))](path, data, follow=follow)
 
-
-    @when("//*")
-    def submit(self, follow=False):
-        self.xpath('.//ancestor::form[1]/').submit(follow=follow)
-
 class ResultWrapper(list):
 
     def __init__(self, elements):
