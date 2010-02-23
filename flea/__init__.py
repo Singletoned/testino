@@ -147,25 +147,6 @@ class ElementWrapper(object):
             and self.agent is other.agent
         )
 
-    #@when("input[@type='radio']")
-    #def _get_value(self):
-    #    print "_get_value", self
-    #    return list(
-    #        item for item in (
-    #            item.attrib.get('value', None)
-    #            for item in self.form.xpath("//input[@type='radio' and @name=$name]", name=attrib['name'])
-    #        ) if item is not None
-    #    )
-
-    #@when("input[@type='radio']")
-    #def _set_value(self):
-    #    for item in self.form.xpath("//input[@type='radio' and @name=$name]", name=attrib['name']):
-    #        if item.attrib['value'] == value:
-    #            item.attrib['checked'] = 'checked'
-    #        else:
-    #            if 'checked' in item.attrib:
-    #                del item.attrib['checked']
-
     value = property(_get_value, _set_value)
 
     @when("input[@type='radio' or @type='checkbox']")
