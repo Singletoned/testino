@@ -262,11 +262,10 @@ def test_form_action_fully_qualified_uri_doesnt_error():
 
 def test_form_submit_follows_redirect():
     form_page = TestAgent(dispatcher).get('/form-text')
-    form = form_page['//form']
-    form.attrib['method'] = 'get'
-    form.attrib['action'] = '/redirect1'
+    form_page['//form'].attrib['method'] = 'get'
+    form_page['//form'].attrib['action'] = '/redirect1'
     assert_equal(
-        form.submit(follow=True).request.path_info,
+        form_page['//form'].submit(follow=True).request.path_info,
         '/page1'
     )
 
@@ -294,5 +293,20 @@ def test_cookie_paths_are_observed():
     response = response.get('/private/cookies')
     assert_equal(response.body, 'doobedo:<dowop>; dowahdowah:<beebeebo>')
 
+def test_back_method_returns_agent_to_previous_state():
+    saved = agent = TestAgent(dispatcher).get('/page1')
+    agent = agent["//a[.='page 2']"].click()
+    assert agent.request.path_info == '/page2'
+    agent = agent.back()
+    assert agent.request.path_info == '/page1'
+    assert agent is saved
+
+def test_back_method_skips_redirects():
+    saved = agent = TestAgent(dispatcher).get('/page2')
+    agent = agent.get('/redirect1', follow=True)
+    assert agent.request.path_info == '/page1'
+    agent = agent.back()
+    assert agent.request.path_info == '/page2'
+    assert agent is saved
 
 

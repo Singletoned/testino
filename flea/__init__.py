@@ -291,7 +291,7 @@ class TestAgent(object):
         'wsgi.run_once': False,
     }
 
-    def __init__(self, app, request=None, response=None, cookies=None, validate_wsgi=True):
+    def __init__(self, app, request=None, response=None, cookies=None, history=None, validate_wsgi=True):
         if validate_wsgi:
             app = wsgi_validator(app)
         self.app = app
@@ -303,6 +303,10 @@ class TestAgent(object):
             self.cookies = BaseCookie()
         if response:
             self.cookies.update(parse_cookies(response))
+        if history:
+            self.history = history
+        else:
+            self.history = []
 
     @classmethod
     def make_environ(cls, REQUEST_METHOD='GET', PATH_INFO='', wsgi_input='', **kwargs):
@@ -337,7 +341,7 @@ class TestAgent(object):
 
         return environ
 
-    def _request(self, environ, follow=False):
+    def _request(self, environ, follow=False, history=False):
         path = environ['SCRIPT_NAME'] + environ['PATH_INFO']
         environ['HTTP_COOKIE'] = '; '.join(
             '%s=%s' % (key, morsel.value) 
@@ -352,13 +356,18 @@ class TestAgent(object):
             else:
                 environ['QUERY_STRING'] = querystring
 
-        response = self.response_class.from_wsgi(self.app, environ, self.start_response)
-        response = self.__class__(self.app, Request(environ), response, self.cookies, validate_wsgi=False)
-        if follow:
-            return follow_redirects(response)
-        return response
+        if history:
+            history = self.history + [self]
+        else:
+            history = self.history
 
-    def get(self, PATH_INFO='/', data=None, charset='UTF-8', follow=False, **kwargs):
+        response = self.response_class.from_wsgi(self.app, environ, self.start_response)
+        agent = self.__class__(self.app, Request(environ), response, self.cookies, history, validate_wsgi=False)
+        if follow:
+            return agent.follow_all()
+        return agent
+
+    def get(self, PATH_INFO='/', data=None, charset='UTF-8', follow=False, history=True, **kwargs):
         """
         Make a GET request to the application and return the response.
         """
@@ -367,13 +376,14 @@ class TestAgent(object):
 
         return self._request(
             self.make_environ('GET', PATH_INFO=PATH_INFO, **kwargs),
-            follow
+            follow,
+            history,
         )
 
     def start_response(self, status, headers, exc_info=None):
         pass
 
-    def post(self, PATH_INFO='/', data=None, charset='UTF-8', follow=False, **kwargs):
+    def post(self, PATH_INFO='/', data=None, charset='UTF-8', follow=False, history=True, **kwargs):
         """
         Make a POST request to the application and return the response.
         """
@@ -393,6 +403,7 @@ class TestAgent(object):
                 **kwargs
             ),
             follow,
+            history,
         )
 
     def post_multipart(self, PATH_INFO='/', data=None, files=None, charset='UTF-8', follow=False, **kwargs):
@@ -464,6 +475,12 @@ class TestAgent(object):
             follow=follow,
         )
 
+    def __str__(self):
+        if self.response:
+            return str(self.response)
+        else:
+            return super(TestAgent, self).__str__()
+
     @property
     def body(self):
         return self.response.body
@@ -510,19 +527,46 @@ class TestAgent(object):
             follow=follow
         )
 
-def follow_redirects(response):
-    """
-    If response has a 301 or 302 status code, fetch (GET) the redirect target, until a non-redirect code is received
-    """
-    while int(response.response.status.split()[0]) in (301, 302):
-        response = response.get(
-            uri_join_same_server(
-                response.request.request_uri,
-                response.response.get_header('Location')
+    def follow(self):
+        """
+        If response has a ``30x`` status code, fetch (``GET``) the redirect
+        target. No entry is recorded in the agent's history list.
+        """
+        if not (300 <= int(self.response.status.split()[0]) < 400):
+            raise AssertionError(
+                "Can't follow non-redirect response (got %s for %s %s)" % (
+                    self.response.status,
+                    self.request.request_method,
+                    self.request.request_path
+                )
             )
-        )
-    return response
 
+        return self.get(
+            uri_join_same_server(
+                self.request.request_uri,
+                self.response.get_header('Location')
+            ),
+            history=False,
+        )
+
+
+    def follow_all(self):
+        """
+        If response has a ``30x`` status code, fetch (``GET``) the redirect
+        target, until a non-redirect code is received. No entries are recorded
+        in the agent's history list.
+        """
+
+        agent = self
+        while True:
+            try:
+                agent = agent.follow()
+            except AssertionError:
+                return agent
+
+
+    def back(self, count=1):
+        return self.history[-abs(count)]
 
 def striptags(node):
     """
