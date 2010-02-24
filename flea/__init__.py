@@ -537,6 +537,10 @@ class TestAgent(object):
         result = self.lxmldoc.xpath(path, **kwargs)
         if not isinstance(result, list):
             raise ValueError("XPath expression %r does not yield a list of elements" % path)
+
+        if len(result) == 0:
+            raise ValueError("%r matched no elements" % path)
+
         return ResultWrapper(
             ElementWrapper(self, el) for el in result
         )
