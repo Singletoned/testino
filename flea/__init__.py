@@ -2,8 +2,8 @@ from wsgiref.validate import validator as wsgi_validator
 from cStringIO import StringIO
 from urlparse import urlparse, urlunparse
 from Cookie import BaseCookie
-import re
 from functools import wraps
+import re
 
 from lxml.html import fromstring, tostring
 from lxml.cssselect import CSSSelector
