@@ -211,6 +211,23 @@ def test_form_select_multiple():
     r['//select'].value = ['o1', 'o3']
     assert_equal(r['//form'].submit().body, 's:<o1>; s:<o3>')
 
+def test_form_radio():
+    app = makeformapp("""
+        <input name="a" value="1" type="radio"/>
+        <input name="a" value="2" type="radio"/>
+        <input name="b" value="3" type="radio"/>
+        <input name="b" value="4" type="radio"/>
+    """)
+    r = TestAgent(app).get('/')
+    r['//*[@name="a"]'].value = '1'
+    r['//*[@name="b"]'].value = '3'
+    assert_equal(r['//form'].submit().body, 'a:<1>; b:<3>')
+
+    r = TestAgent(app).get('/')
+    r['//*[@name="a"][1]'].checked = True
+    r['//*[@name="a"][2]'].checked = True
+    assert_equal(r['//form'].submit().body, 'a:<2>')
+
 def test_form_hidden():
     form_page = TestAgent(makeformapp('<input name="t" value="1" type="hidden"/>')).get('/')
     assert_equal(

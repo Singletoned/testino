@@ -87,6 +87,21 @@ class ElementWrapper(object):
     def _get_value(self):
         return self.element.attrib.get('value', 'On')
 
+    @when("input[@type='radio']")
+    def _set_value(self, value):
+        found = False
+        for el in self.element.xpath(
+            "./ancestor-or-self::form[1]//input[@type='radio' and @name=$name]",
+            name=self.attrib.get('name', '')
+        ):
+            if (el.attrib['value'] == value):
+                el.attrib['checked'] = ""
+                found = True
+            elif 'checked' in el.attrib:
+                del el.attrib['checked']
+        if not found:
+            raise AssertionError("Value %r not present in radio button group %r" % (value, self.attrib.get('name')))
+
     @when("input|button")
     def _get_value(self):
         return self.element.attrib.get('value', '')
@@ -168,6 +183,26 @@ class ElementWrapper(object):
     def _get_checked(self, value):
         return 'checked' in self.attrib
 
+    @when("input[@type='radio']")
+    def _set_checked(self, value):
+        for el in self.element.xpath(
+            "./ancestor-or-self::form[1]//input[@type='radio' and @name=$name]",
+            name=self.attrib.get('name', '')
+        ):
+            try:
+                del el.attrib['checked']
+            except KeyError:
+                pass
+
+        if bool(value):
+            self.attrib['checked'] = 'checked'
+        else:
+            try:
+                del self.attrib['checked']
+            except KeyError:
+                pass
+
+    @when("input")
     def _set_checked(self, value):
         if bool(value):
             self.attrib['checked'] = 'checked'
