@@ -211,10 +211,21 @@ def test_form_select_multiple():
     r['//select'].value = ['o1', 'o3']
     assert_equal(r['//form'].submit().body, 's:<o1>; s:<o3>')
 
+def test_form_hidden():
+    form_page = TestAgent(makeformapp('<input name="t" value="1" type="hidden"/>')).get('/')
+    assert_equal(
+        form_page['//form'].form.submit().body,
+        't:<1>'
+    )
+
 
 def test_form_disabled():
-    makeformapp("""
-    """)
+    form_page = TestAgent(makeformapp('<input name="t" value="1" type="text" disabled="" />')).get('/')
+    assert_equal(
+        form_page['//form'].form.submit().body,
+        ''
+    )
+
 
 def test_form_submit_button():
     app = makeformapp('''

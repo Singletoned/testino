@@ -151,12 +151,16 @@ class ElementWrapper(object):
 
     @when("input[@type='radio' or @type='checkbox']")
     def submit_value(self):
+        if 'disabled' in self.element.attrib:
+            return None
         if 'checked' in self.element.attrib:
             return self.value
         return None
 
     @when("input[@type != 'submit' and @type != 'image' and @type != 'reset']|select|textarea")
     def submit_value(self):
+        if 'disabled' in self.element.attrib:
+            return None
         return self.value
 
     submit_value = property(submit_value)
