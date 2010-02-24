@@ -174,7 +174,6 @@ class ElementWrapper(object):
                 pass
     checked = property(_get_checked, _set_checked)
 
-
     @property
     @when("input|textarea|button|select|form")
     def form(self):
@@ -226,6 +225,44 @@ class ElementWrapper(object):
 
         return data
 
+    def html(self):
+        """
+        Return an HTML representation of the element
+        """
+        return tostring(self.element)
+
+    def pretty(self):
+        """
+        Return an pretty-printed string representation of the element
+        """
+        return tostring(self.element, pretty_print=True)
+
+    def striptags(self):
+        """
+        Strip tags out of ``lxml.html`` document ``node``, just leaving behind
+        text. Normalize all sequences of whitespace to a single space.
+
+        Use this for simple text comparisons when testing for document content
+
+        Example:
+            >>> striptags(fromstring('the <span>foo</span> is <strong>b</strong>ar'))
+            'the foo is bar'
+
+        """
+        def _striptags(node):
+            if node.text:
+                yield node.text
+            for subnode in node:
+                for text in _striptags(subnode):
+                    yield text
+            if node.tail:
+                yield node.tail
+        return re.sub(r'\s\s*', ' ', ''.join(_striptags(self.element)))
+
+    def __contains__(self, what):
+        return what in self.html()
+
+
 class ResultWrapper(list):
     """
     Wrap a list of elements (``ElementWrapper`` objects) returned from an xpath
@@ -250,26 +287,17 @@ class ResultWrapper(list):
     def __getattr__(self, attr):
         return getattr(self[0], attr)
 
+    def __setattr__(self, attr, value):
+        return setattr(self[0], attr, value)
+
     def __getitem__(self, item):
         if isinstance(item, int):
             return super(ResultWrapper, self).__getitem__(item)
         else:
             return self[0][item]
 
-    def click(self, follow=False):
-        return self[0].click(follow=follow)
-
-    def _get_value(self):
-        return self[0].value
-    def _set_value(self, value):
-        self[0].value = value
-    value = property(_get_value, _set_value)
-
-    def _get_checked(self):
-        return self[0].checked
-    def _set_checked(self, value):
-        self[0].checked = checked
-    checked = property(_get_checked, _set_checked)
+    def __contains__(self, what):
+        return self[0].__contains__(what)
 
 class TestAgent(object):
 
@@ -344,7 +372,7 @@ class TestAgent(object):
     def _request(self, environ, follow=False, history=False):
         path = environ['SCRIPT_NAME'] + environ['PATH_INFO']
         environ['HTTP_COOKIE'] = '; '.join(
-            '%s=%s' % (key, morsel.value) 
+            '%s=%s' % (key, morsel.value)
             for key, morsel in self.cookies.items()
             if path.startswith(morsel['path'])
         )
@@ -489,8 +517,18 @@ class TestAgent(object):
     def lxmldoc(self):
         if self._lxmldoc is not None:
             return self._lxmldoc
-        self._lxmldoc = fromstring(self.response.body)
+        self.reset()
         return self._lxmldoc
+
+    @property
+    def root_element(self):
+        return ElementWrapper(self, self.lxmldoc)
+
+    def reset(self):
+        """
+        Reset the lxml document, abandoning any changes made
+        """
+        self._lxmldoc = fromstring(self.response.body)
 
     def find(self, path, **kwargs):
         """
@@ -568,27 +606,18 @@ class TestAgent(object):
     def back(self, count=1):
         return self.history[-abs(count)]
 
-def striptags(node):
-    """
-    Strip tags out of ``lxml.html`` document ``node``, just leaving behind
-    text. Normalize all sequences of whitespace to a single space.
+    def __enter__(self):
+        """
+        Provde support for context blocks
+        """
+        return self
 
-    Use this for simple text comparisons when testing for document content
+    def __exit__(self, exc_type, exc_value, traceback):
+        """
+        At end of context block, reset the lxml document
+        """
+        self.reset()
 
-    Example:
-        >>> striptags(fromstring('the <span>foo</span> is <strong>b</strong>ar'))
-        'the foo is bar'
-
-    """
-    def _striptags(node):
-        if node.text:
-            yield node.text
-        for subnode in node:
-            for text in _striptags(subnode):
-                yield text
-        if node.tail:
-            yield node.tail
-    return re.sub(r'\s\s*', ' ', ''.join(_striptags(node)))
 
 def uri_join_same_server(baseuri, uri):
     """

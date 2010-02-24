@@ -39,7 +39,6 @@ def makeformapp(formhtml, action=None):
 
     return app
 
-
 class testapp(object):
 
     @match('/redirect1', 'GET')
@@ -86,17 +85,6 @@ class testapp(object):
           </body></html>
     ''')
     def form_checkbox(request):
-        return {}
-
-    @match('/form-textarea', 'GET')
-    @page('''
-          <html><body>
-          <form method="POST" action="/postform">
-            <textarea name="t"></textarea>
-          </form>
-          </body></html>
-    ''')
-    def form_textarea(request):
         return {}
 
 
@@ -192,8 +180,9 @@ def test_form_checkbox():
     )
 
 def test_form_textarea():
-    form_page = TestAgent(dispatcher).get('/form-textarea')
-    form_page['//textarea'].value = 'test'
+    form_page = TestAgent(makeformapp('<textarea name="t"></textarea>')).get('/')
+    el = form_page['//textarea']
+    el.value = 'test'
     assert_equal(
         form_page['//textarea'].form.submit().body,
         't:<test>'
@@ -309,4 +298,32 @@ def test_back_method_skips_redirects():
     assert agent.request.path_info == '/page2'
     assert agent is saved
 
+def test_context_manager_allows_checkpointing_history():
+    saved = agent = TestAgent(dispatcher).get('/page1')
+
+    with agent as a2:
+        a2 = a2["//a[.='page 2']"].click()
+        assert a2.request.path_info == '/page2'
+
+    assert agent.request.path_info == '/page1'
+    assert agent is saved
+
+def test_html_method_returns_string_representation():
+    agent = TestAgent(Response(['<p>I would like an ice lolly</p>'])).get('/')
+    assert_equal(
+        agent.root_element.html(),
+        '<p>I would like an ice lolly</p>'
+    )
+
+def test_striptags_method_returns_string_representation():
+    agent = TestAgent(Response(['<p>And a nice <strong>cup of tea</strong>!</p>'])).get('/')
+    assert_equal(
+        agent.root_element.striptags(),
+        'And a nice cup of tea!'
+    )
+
+def test_in_operator_works_on_elementwrapper():
+    agent = TestAgent(Response(['<p>Tea tray tea tray tea tray tea tray</p>'])).get('/')
+    assert 'tea tray' in agent['//p']
+    assert 'tea tray' in agent['//p'][0]
 
