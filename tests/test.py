@@ -199,6 +199,11 @@ def test_form_select():
     r['//select'].value = 'o2'
     assert_equal(r['//form'].submit().body, 's:<o2>')
 
+    r = TestAgent(app).get('/')
+    r['//select/option[2]'].selected = True
+    r['//select/option[1]'].selected = True
+    assert_equal(r['//form'].submit().body, 's:<o1>')
+
 def test_form_select_multiple():
     app = makeformapp("""
         <select name="s" multiple="">
@@ -210,6 +215,11 @@ def test_form_select_multiple():
     r = TestAgent(app).get('/')
     r['//select'].value = ['o1', 'o3']
     assert_equal(r['//form'].submit().body, 's:<o1>; s:<o3>')
+
+    r = TestAgent(app).get('/')
+    r['//select/option[3]'].selected = True
+    r['//select/option[2]'].selected = True
+    assert_equal(r['//form'].submit().body, 's:<o2>; s:<o3>')
 
 def test_form_radio():
     app = makeformapp("""

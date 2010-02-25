@@ -124,14 +124,16 @@ class ElementWrapper(object):
 
     @when("select[@multiple]")
     def _set_value(self, values):
-        for el in self.element.xpath('./option'):
-            if 'selected' in el.attrib:
+        found = set()
+        values = set(values)
+        for el in self.element.xpath(".//option"):
+            if (el.attrib['value'] in values):
+                el.attrib['selected'] = ""
+                found.add(el.attrib['value'])
+            elif 'selected' in el.attrib:
                 del el.attrib['selected']
-        for value in values:
-            try:
-                self.element.xpath('./option[@value=$value]', value=value)[0].attrib['selected'] = ''
-            except IndexError:
-                raise ValueError("Value %s not present in select options")
+        if found != values:
+            raise AssertionError("Values %r not present in select %r" % (values - found, self.attrib.get('name')))
 
     @when("select")
     def _get_value(self):
@@ -142,13 +144,16 @@ class ElementWrapper(object):
 
     @when("select")
     def _set_value(self, value):
-        for el in self.element.xpath('./option'):
-            if 'selected' in el.attrib:
+        found = False
+        for el in self.element.xpath(".//option"):
+            if (el.attrib['value'] == value):
+                el.attrib['selected'] = ""
+                found = True
+            elif 'selected' in el.attrib:
                 del el.attrib['selected']
-        try:
-            self.element.xpath('./option[@value=$value]', value=value)[0].attrib['selected'] = ''
-        except IndexError:
-            raise ValueError("Value %s not present in select options")
+        if not found:
+            raise AssertionError("Value %r not present in select %r" % (value, self.attrib.get('name')))
+
 
     @when("textarea")
     def _set_value(self, value):
@@ -189,18 +194,14 @@ class ElementWrapper(object):
             "./ancestor-or-self::form[1]//input[@type='radio' and @name=$name]",
             name=self.attrib.get('name', '')
         ):
-            try:
+            if 'checked' in el.attrib:
                 del el.attrib['checked']
-            except KeyError:
-                pass
 
         if bool(value):
             self.attrib['checked'] = 'checked'
         else:
-            try:
+            if 'checked' in self.attrib:
                 del self.attrib['checked']
-            except KeyError:
-                pass
 
     @when("input")
     def _set_checked(self, value):
@@ -212,6 +213,32 @@ class ElementWrapper(object):
             except KeyError:
                 pass
     checked = property(_get_checked, _set_checked)
+
+    @when("select[not(@multiple)]//option")
+    def _set_selected(self, value):
+        for el in self.element.xpath(".//option"):
+            if 'selected' in el.attrib:
+                del el.attrib['selected']
+
+        if bool(value):
+            self.attrib['selected'] = ''
+        else:
+            if 'selected' in self.attrib:
+                del self.attrib['selected']
+
+    @when("option")
+    def _get_selected(self, value):
+        return 'selected' in self.attrib
+
+    @when("option")
+    def _set_selected(self, value):
+        if bool(value):
+            self.attrib['selected'] = ''
+        else:
+            if 'selected' in self.attrib:
+                del self.attrib['selected']
+    selected = property(_get_selected, _set_selected)
+
 
     @property
     @when("input|textarea|button|select|form")
