@@ -214,31 +214,24 @@ class ElementWrapper(object):
                 pass
     checked = property(_get_checked, _set_checked)
 
-    @when("select[not(@multiple)]//option")
-    def _set_selected(self, value):
-        for el in self.element.xpath(".//option"):
-            if 'selected' in el.attrib:
-                del el.attrib['selected']
-
-        if bool(value):
-            self.attrib['selected'] = ''
-        else:
-            if 'selected' in self.attrib:
-                del self.attrib['selected']
-
     @when("option")
     def _get_selected(self, value):
         return 'selected' in self.element.attrib
 
     @when("option")
     def _set_selected(self, value):
+        if 'multiple' not in self.element.xpath('./ancestor-or-self::select[1]')[0].attrib:
+            for el in self.element.xpath("./ancestor-or-self::select[1]//option"):
+                if 'selected' in el.attrib:
+                    del el.attrib['selected']
+
         if bool(value):
             self.element.attrib['selected'] = ''
         else:
-            if 'selected' in self.attrib:
-                del self.attrib['selected']
-    selected = property(_get_selected, _set_selected)
+            if 'selected' in self.element.attrib:
+                del self.element.attrib['selected']
 
+    selected = property(_get_selected, _set_selected)
 
     @property
     @when("input|textarea|button|select|form")
