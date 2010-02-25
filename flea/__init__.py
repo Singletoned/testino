@@ -92,7 +92,7 @@ class ElementWrapper(object):
         found = False
         for el in self.element.xpath(
             "./ancestor-or-self::form[1]//input[@type='radio' and @name=$name]",
-            name=self.attrib.get('name', '')
+            name=self.element.attrib.get('name', '')
         ):
             if (el.attrib['value'] == value):
                 el.attrib['checked'] = ""
@@ -100,7 +100,7 @@ class ElementWrapper(object):
             elif 'checked' in el.attrib:
                 del el.attrib['checked']
         if not found:
-            raise AssertionError("Value %r not present in radio button group %r" % (value, self.attrib.get('name')))
+            raise AssertionError("Value %r not present in radio button group %r" % (value, self.element.attrib.get('name')))
 
     @when("input|button")
     def _get_value(self):
@@ -133,7 +133,7 @@ class ElementWrapper(object):
             elif 'selected' in el.attrib:
                 del el.attrib['selected']
         if found != values:
-            raise AssertionError("Values %r not present in select %r" % (values - found, self.attrib.get('name')))
+            raise AssertionError("Values %r not present in select %r" % (values - found, self.element.attrib.get('name')))
 
     @when("select")
     def _get_value(self):
@@ -152,7 +152,7 @@ class ElementWrapper(object):
             elif 'selected' in el.attrib:
                 del el.attrib['selected']
         if not found:
-            raise AssertionError("Value %r not present in select %r" % (value, self.attrib.get('name')))
+            raise AssertionError("Value %r not present in select %r" % (value, self.element.attrib.get('name')))
 
 
     @when("textarea")
@@ -186,30 +186,30 @@ class ElementWrapper(object):
     submit_value = property(submit_value)
 
     def _get_checked(self, value):
-        return 'checked' in self.attrib
+        return 'checked' in self.element.attrib
 
     @when("input[@type='radio']")
     def _set_checked(self, value):
         for el in self.element.xpath(
             "./ancestor-or-self::form[1]//input[@type='radio' and @name=$name]",
-            name=self.attrib.get('name', '')
+            name=self.element.attrib.get('name', '')
         ):
             if 'checked' in el.attrib:
                 del el.attrib['checked']
 
         if bool(value):
-            self.attrib['checked'] = 'checked'
+            self.element.attrib['checked'] = 'checked'
         else:
-            if 'checked' in self.attrib:
-                del self.attrib['checked']
+            if 'checked' in self.element.attrib:
+                del self.element.attrib['checked']
 
     @when("input")
     def _set_checked(self, value):
         if bool(value):
-            self.attrib['checked'] = 'checked'
+            self.element.attrib['checked'] = 'checked'
         else:
             try:
-                del self.attrib['checked']
+                del self.element.attrib['checked']
             except KeyError:
                 pass
     checked = property(_get_checked, _set_checked)
@@ -228,12 +228,12 @@ class ElementWrapper(object):
 
     @when("option")
     def _get_selected(self, value):
-        return 'selected' in self.attrib
+        return 'selected' in self.element.attrib
 
     @when("option")
     def _set_selected(self, value):
         if bool(value):
-            self.attrib['selected'] = ''
+            self.element.attrib['selected'] = ''
         else:
             if 'selected' in self.attrib:
                 del self.attrib['selected']
@@ -261,7 +261,7 @@ class ElementWrapper(object):
             ('GET', None): self.agent.get,
             ('POST', None): self.agent.post,
             ('POST', 'multipart/form-data'): self.agent.post_multipart,
-        }[(method, self.attrib.get('encoding'))](path, data, follow=follow)
+        }[(method, self.element.attrib.get('encoding'))](path, data, follow=follow)
 
     @when("form")
     def submit_data(self, button=None):
