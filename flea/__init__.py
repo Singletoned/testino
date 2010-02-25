@@ -592,10 +592,17 @@ class TestAgent(object):
     def find(self, path, **kwargs):
         """
         Return elements matching the given xpath expression.
+
+        If the xpath selects a list of elements a ``ResultWrapper`` object is
+        returned.
+
+        If the xpath selects any other type (eg a string attribute value), the
+        result of the query is returned directly.
         """
         result = self.lxmldoc.xpath(path, **kwargs)
+
         if not isinstance(result, list):
-            raise ValueError("XPath expression %r does not yield a list of elements" % path)
+            return result
 
         if len(result) == 0:
             raise ValueError("%r matched no elements" % path)
