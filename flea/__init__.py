@@ -15,11 +15,18 @@ from pesto.wsgiutils import uri_join, make_query
 from pesto.httputils import parse_querystring
 from pesto.utils import MultiDict
 
+__version__ = "1"
+
 xpath_registry = {}
 
 class XPathMultiMethod(object):
+    """
+    A callable object that has different implementations selected by XPath
+    expressions.
+    """
 
     def __init__(self):
+        self.__doc__ = ''
         self.endpoints = []
 
     def __call__(self, *args, **kwargs):
@@ -31,30 +38,59 @@ class XPathMultiMethod(object):
         raise NotImplementedError("Function not implemented for element %r" % (el,))
 
     def register(self, xpath, func):
-        self.endpoints.append((xpath, func))
+        self.endpoints.append((
+            XPath(
+                '|'.join('../%s' % item for item in xpath.split('|'))
+            ),
+            func
+        ))
+        if not func.func_doc:
+            return
+
+        # Add wrapped function to the object's docstring
+        # Note that ".. comment block" is required to fool rst/sphinx into
+        # correctly parsing the indented paragraphs when there is only one
+        # registered endpoint.
+        self.__doc__ += 'For elements matching ``%s``:\n%s\n\n.. comment block\n\n' % (
+            xpath,
+            '\n'.join('    %s' % line for line in func.func_doc.split('\n'))
+        )
 
 def when(xpath_expr):
+    """
+    Decorator for methods having different implementations selected by XPath
+    expressions.
+    """
     def when(func):
         if getattr(func, '__wrapped__', None):
             func = getattr(func, '__wrapped__')
         multimethod = xpath_registry.setdefault(func.__name__, XPathMultiMethod())
-        multimethod.register(
-            XPath(
-                '|'.join('../%s' % item for item in xpath_expr.split('|'))
-            ),
-            func
-        )
+        multimethod.register(xpath_expr, func)
         wrapped = wraps(func)(
             lambda self, *args, **kwargs: multimethod(self, *args, **kwargs)
         )
         wrapped.__wrapped__ = func
+        wrapped.func_doc = multimethod.__doc__
         return wrapped
     return when
 
 class ElementWrapper(object):
     """
-    Wrapper for an ``lxml.etree`` element, providing context of the
-    ``TestAgent`` object associated with the request for the document.
+    Wrapper for an ``lxml.etree`` element, providing additional methods useful
+    for driving/testing WSGI applications. ``ElementWrapper`` objects are
+    normally created through the ``find``/``findcss`` methods of ``TestAgent``
+    instance::
+
+        >>> from pesto.response import Response
+        >>> myapp = Response(['<html><body><a href="/">link 1</a><a href="/">link 2</a></body></html>'])
+        >>> agent = TestAgent(myapp).get('/')
+        >>> elementwrapper = agent.find('//a')[0]
+
+    ``ElementWrapper`` objects have many methods and properties implemented as
+    ``XPathMultiMethod`` objects, meaning their behaviour varies depending on
+    the type of element being wrapped. For example, form elements have a
+    ``submit`` method, ``a`` elements have a ``click`` method, and ``input``
+    elements have a value property.
     """
 
     def __init__(self, agent, element):
@@ -81,14 +117,24 @@ class ElementWrapper(object):
 
     @when("a[@href]")
     def click(self, follow=False):
+        """
+        Follow a link and return a new instance of ``TestAgent``
+        """
         return self.agent._click(self, follow=follow)
 
     @when("input[@type='checkbox']")
     def _get_value(self):
+        """
+        Return the value of the selected checkbox attribute (defaults to ``On``)
+        """
         return self.element.attrib.get('value', 'On')
 
     @when("input[@type='radio']")
     def _set_value(self, value):
+        """
+        Set the value of the radio button, by searching for the radio
+        button in the group with the given value and checking it.
+        """
         found = False
         for el in self.element.xpath(
             "./ancestor-or-self::form[1]//input[@type='radio' and @name=$name]",
@@ -104,26 +150,44 @@ class ElementWrapper(object):
 
     @when("input|button")
     def _get_value(self):
+        """
+        Return the value of the input or button element
+        """
         return self.element.attrib.get('value', '')
 
     @when("input|button")
     def _set_value(self, value):
+        """
+        Set the value of the input or button element
+        """
         self.element.attrib['value'] = value
 
     @when("textarea")
     def _get_value(self):
+        """
+        Return the value of the textarea
+        """
         return self.element.text
 
     @when("textarea")
     def _set_value(self, value):
+        """
+        Set the value of the textarea
+        """
         self.element.text = value
 
     @when("select[@multiple]")
     def _get_value(self):
+        """
+        Return the value of the multiple select
+        """
         return [item.attrib.get('value') for item in self.element.xpath('./option[@selected]')]
 
     @when("select[@multiple]")
     def _set_value(self, values):
+        """
+        Set the value of the multiple select to the given list of values
+        """
         found = set()
         values = set(values)
         for el in self.element.xpath(".//option"):
@@ -137,6 +201,9 @@ class ElementWrapper(object):
 
     @when("select")
     def _get_value(self):
+        """
+        Return the value of the (non-multiple) select box
+        """
         try:
             return self.element.xpath('./option[@selected]')[0].attrib['value']
         except (KeyError, IndexError):
@@ -144,6 +211,9 @@ class ElementWrapper(object):
 
     @when("select")
     def _set_value(self, value):
+        """
+        Set the value of the (non-multiple) select to the given single value
+        """
         found = False
         for el in self.element.xpath(".//option"):
             if (el.attrib['value'] == value):
@@ -154,10 +224,6 @@ class ElementWrapper(object):
         if not found:
             raise AssertionError("Value %r not present in select %r" % (value, self.element.attrib.get('name')))
 
-
-    @when("textarea")
-    def _set_value(self, value):
-        self.element.text = value
 
     def __eq__(self, other):
         if self.__class__ is not other.__class__:
@@ -171,6 +237,10 @@ class ElementWrapper(object):
 
     @when("input[@type='radio' or @type='checkbox']")
     def submit_value(self):
+        """
+        Return the value of the selected radio/checkbox element as the user
+        agent would return it to the server in a form submission.
+        """
         if 'disabled' in self.element.attrib:
             return None
         if 'checked' in self.element.attrib:
@@ -179,6 +249,11 @@ class ElementWrapper(object):
 
     @when("input[@type != 'submit' and @type != 'image' and @type != 'reset']|select|textarea")
     def submit_value(self):
+        """
+        Return the value of any other input element as the user
+        agent would return it to the server in a form submission.
+        """
+
         if 'disabled' in self.element.attrib:
             return None
         return self.value
@@ -186,10 +261,16 @@ class ElementWrapper(object):
     submit_value = property(submit_value)
 
     def _get_checked(self, value):
+        """
+        Return True if the element has the checked attribute
+        """
         return 'checked' in self.element.attrib
 
     @when("input[@type='radio']")
     def _set_checked(self, value):
+        """
+        Set the radio button state to checked (unchecking any others in the group)
+        """
         for el in self.element.xpath(
             "./ancestor-or-self::form[1]//input[@type='radio' and @name=$name]",
             name=self.element.attrib.get('name', '')
@@ -205,6 +286,9 @@ class ElementWrapper(object):
 
     @when("input")
     def _set_checked(self, value):
+        """
+        Set the (checkbox) input state to checked
+        """
         if bool(value):
             self.element.attrib['checked'] = 'checked'
         else:
@@ -216,10 +300,18 @@ class ElementWrapper(object):
 
     @when("option")
     def _get_selected(self, value):
+        """
+        Return True if the given select option is selected
+        """
         return 'selected' in self.element.attrib
 
     @when("option")
     def _set_selected(self, value):
+        """
+        Set the ``selected`` attribute for the select option element. If the
+        select does not have the ``multiple`` attribute, unselect any
+        previously selected option.
+        """
         if 'multiple' not in self.element.xpath('./ancestor-or-self::select[1]')[0].attrib:
             for el in self.element.xpath("./ancestor-or-self::select[1]//option"):
                 if 'selected' in el.attrib:
@@ -236,14 +328,25 @@ class ElementWrapper(object):
     @property
     @when("input|textarea|button|select|form")
     def form(self):
+        """
+        Return the form associated with the wrapped element.
+        """
         return self.__class__(self.agent, self.element.xpath("./ancestor-or-self::form[1]")[0])
 
     @when("input[@type='submit' or @type='image']|button[@type='submit' or not(@type)]")
     def submit(self, follow=False):
+        """
+        Submit the form, returning a new ``TestAgent`` object, by clicking on
+        the selected submit element (input of
+        type submit or image, or button with type submit)
+        """
         return self.form.submit(self, follow)
 
     @when("form")
     def submit(self, button=None, follow=False):
+        """
+        Submit the form, returning a new ``TestAgent`` object
+        """
         method = self.element.attrib['method'].upper()
         data = self.submit_data(button)
         path = uri_join_same_server(
@@ -258,6 +361,10 @@ class ElementWrapper(object):
 
     @when("form")
     def submit_data(self, button=None):
+        """
+        Return a list of the data that would be submitted to the server
+        in the format ``[(key, value), ...]``, without actually submitting the form.
+        """
         data = []
 
         if button and 'name' in button.attrib:
@@ -303,9 +410,13 @@ class ElementWrapper(object):
 
         Use this for simple text comparisons when testing for document content
 
-        Example:
-            >>> striptags(fromstring('the <span>foo</span> is <strong>b</strong>ar'))
-            'the foo is bar'
+        Example::
+
+            >>> from pesto.response import Response
+            >>> myapp = Response(['<p>the <span>foo</span> is completely <strong>b</strong>azzed</p>'])
+            >>> agent = TestAgent(myapp).get('/')
+            >>> agent['//p'].striptags()
+            'the foo is completely bazzed'
 
         """
         def _striptags(node):
@@ -327,17 +438,33 @@ class ResultWrapper(list):
     Wrap a list of elements (``ElementWrapper`` objects) returned from an xpath
     query, providing reasonable default behaviour for testing.
 
-    ``ResultWrapper`` objects act like lists when indexed numerically::
+    ``ResultWrapper`` objects usually wrap ``ElementWrapper`` objects, which in
+    turn wrap an lxml element and are normally created through the find/findcss
+    methods of ``TestAgent``::
 
-        >>> r = ResultWrapper(['fred', 'jim'])
-        >>> r[0]
-        'fred'
+        >>> from pesto.response import Response
+        >>> myapp = Response(['<html><body><p>item 1</p><p>item 2</p></body></html>'])
+        >>> agent = TestAgent(myapp).get('/')
+        >>> resultwrapper = agent.find('//p')
 
-    For any non-numeric item/attribute access, the first item in the result
-    list is used:
+    ``ResultWrapper`` objects have list like behaviour::
 
-        >>> r.upper()
-        'FRED'
+        >>> len(resultwrapper)
+        2
+        >>> resultwrapper[0] #doctest: +ELLIPSIS
+        <ElementWrapper <Element p at ...>>
+
+    Attributes that are not part of the list interface are proxied to the first
+    item in the result list for convenience. These two uses are equivalent::
+
+        >>> resultwrapper[0].text
+        'item 1'
+        >>> resultwrapper.text
+        'item 1'
+
+    Items in the ``ResultWrapper`` are ``ElementWrapper`` instances, which
+    provide methods in addition to the normal lxml.element methods (eg
+    ``click()``, setting/getting form field values etc).
 
     """
     def __init__(self, elements):
@@ -359,6 +486,30 @@ class ResultWrapper(list):
         return self[0].__contains__(what)
 
 class TestAgent(object):
+    """
+    A ``TestAgent`` object provides a user agent for the WSGI application under
+    test.
+
+    Key methods and properties:
+
+        - ``get(path)``, ``post(path)``, ``post_multipart`` - create get/post
+          requests for the WSGI application and return a new ``TestAgent`` object
+
+        - ``request``, ``response`` - the `Pesto <http://pesto.redgecko.org/>`_
+          request and response objects associated with the last WSGI request.
+
+        - ``body`` - the body response as a string
+
+        - ``lxmldoc`` - the lxml representation of the response body (only
+           applicable for HTML responses)
+
+        - ``reset()`` - reset the TestAgent object to its initial state, discarding any form
+           field values
+
+        - ``find()`` (or dictionary-style attribute access) - evalute the given
+           xpath expression against the current response body and return a
+           ``ResultWrapper`` object.
+    """
 
     response_class = MockResponse
     _lxmldoc = None
@@ -467,9 +618,6 @@ class TestAgent(object):
             history,
         )
 
-    def start_response(self, status, headers, exc_info=None):
-        pass
-
     def post(self, PATH_INFO='/', data=None, charset='UTF-8', follow=False, history=True, **kwargs):
         """
         Make a POST request to the application and return the response.
@@ -561,6 +709,11 @@ class TestAgent(object):
             ),
             follow=follow,
         )
+
+    def start_response(self, status, headers, exc_info=None):
+        """
+        No-op implementation.
+        """
 
     def __str__(self):
         if self.response:
@@ -695,6 +848,7 @@ def uri_join_same_server(baseuri, uri):
     protocol and netloc portions removed. If the resulting URI has a different
     protocol/netloc then a ``ValueError`` will be raised.
 
+        >>> from flea import uri_join_same_server
         >>> uri_join_same_server('http://localhost/foo', 'bar')
         '/bar'
         >>> uri_join_same_server('http://localhost/foo', 'http://localhost/bar')

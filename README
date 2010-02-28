@@ -1,0 +1,27 @@
+Flea
+====
+
+Flea helps you test WSGI applications without starting up an HTTP server.
+
+
+If you already know lxml, you'll know what makes flea so powerful.
+Flea is fully integrated with lxml's xpath api, letting you inspect, modify
+and navigate HTML documents returned from your WSGI application. Here's an
+example session::
+
+	>>> agent = TestAgent(my_wsgi_app)
+	>>> agent.get('/')
+	>>> print agent.body
+	<html>
+		<body>
+			<a href="/sign-in">sign in</a>
+		</body>
+	</html>
+	>>> agent = agent["//a[.='sign in']"].click()
+	>>> print agent.request.request_uri
+	http://localhost/sign-in
+	>>> agent["//input[@name='username']"].value = 'root'
+	>>> agent["//input[@name='password']"].value = 'password'
+	>>> agent = agent["//input[@type='submit']"].submit()
+
+Full package documentation: `<http://packages.python.org/flea/>`_
