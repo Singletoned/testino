@@ -347,7 +347,7 @@ class ElementWrapper(object):
         """
         Submit the form, returning a new ``TestAgent`` object
         """
-        method = self.element.attrib['method'].upper()
+        method = self.element.attrib.get('method', 'GET').upper()
         data = self.submit_data(button)
         path = uri_join_same_server(
             self.agent.request.request_uri,
