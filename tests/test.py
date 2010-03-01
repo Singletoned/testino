@@ -266,21 +266,34 @@ def test_form_submit_button():
     ''')
     form_page = TestAgent(app).get('/')
 
-
     assert_equal(form_page['//form'].submit().body, '')
+    assert_equal(form_page['//form'].submit_data(), [])
 
     assert_equal(form_page.findcss('#1').submit().body, 's:<1>')
+    assert_equal(form_page.findcss('#1').submit_data(), [('s', '1')])
     assert_equal(form_page.findcss('#2').submit().body, 's:<2>')
+    assert_equal(form_page.findcss('#2').submit_data(), [('s', '2')])
     assert_equal(form_page.findcss('#3').submit().body, 't:<3>')
+    assert_equal(form_page.findcss('#3').submit_data(), [('t', '3')])
     assert_equal(form_page.findcss('#4').submit().body, 'u:<4>; u.x:<1>; u.y:<1>')
+    assert_equal(form_page.findcss('#4').submit_data(), [('u', '4'), ('u.x', '1'), ('u.y', '1')])
     assert_equal(form_page.findcss('#5').submit().body, 'v:<5>')
+    assert_equal(form_page.findcss('#5').submit_data(), [('v', '5')])
     assert_equal(form_page.findcss('#6').submit().body, 'w:<6>')
+    assert_equal(form_page.findcss('#6').submit_data(), [('w', '6')])
     try:
         form_page.findcss('#7').submit()
     except NotImplementedError:
         pass
     else:
         raise AssertionError("Shouldn't be able to submit a non-submit button")
+
+    try:
+        form_page.findcss('#7').submit_data()
+    except NotImplementedError:
+        pass
+    else:
+        raise AssertionError("Shouldn't be able to call submit_data on a non-submit button")
 
 def test_form_action_fully_qualified_uri_doesnt_error():
     app = makeformapp("", action='http://localhost/')

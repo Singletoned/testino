@@ -342,6 +342,15 @@ class ElementWrapper(object):
         """
         return self.form.submit(self, follow)
 
+    @when("input[@type='submit' or @type='image']|button[@type='submit' or not(@type)]")
+    def submit_data(self):
+        """
+        Submit the form, returning a new ``TestAgent`` object, by clicking on
+        the selected submit element (input of
+        type submit or image, or button with type submit)
+        """
+        return self.form.submit_data(self)
+
     @when("form")
     def submit(self, button=None, follow=False):
         """
@@ -370,8 +379,8 @@ class ElementWrapper(object):
         if button and 'name' in button.attrib:
             data.append((button.attrib['name'], button.value))
             if button.element.attrib.get('type') == 'image':
-                data.append((button.attrib['name'] + '.x', 1))
-                data.append((button.attrib['name'] + '.y', 1))
+                data.append((button.attrib['name'] + '.x', '1'))
+                data.append((button.attrib['name'] + '.y', '1'))
 
         for input in (ElementWrapper(self.agent, el) for el in self.element.xpath('.//input|.//textarea|.//select')):
             try:
