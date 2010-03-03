@@ -254,6 +254,11 @@ def test_form_disabled():
     )
 
 
+def test_form_input_no_type():
+    form_page = TestAgent(makeformapp('<input name="t" value="1" />')).get('/')
+    assert_equal(form_page['//form'].form.submit().body, 't:<1>')
+
+
 def test_form_submit_button():
     app = makeformapp('''
         <input id="1" type="submit" name="s" value="1"/>

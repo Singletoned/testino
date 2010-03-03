@@ -247,7 +247,7 @@ class ElementWrapper(object):
             return self.value
         return None
 
-    @when("input[@type != 'submit' and @type != 'image' and @type != 'reset']|select|textarea")
+    @when("input[not(@type) or @type != 'submit' and @type != 'image' and @type != 'reset']|select|textarea")
     def submit_value(self):
         """
         Return the value of any other input element as the user
@@ -257,6 +257,13 @@ class ElementWrapper(object):
         if 'disabled' in self.element.attrib:
             return None
         return self.value
+
+    @when("input[@type != 'submit' or @type != 'image' or @type != 'reset']")
+    def submit_value(self):
+        """
+        Return the value of any submit/reset input element
+        """
+        return None
 
     submit_value = property(submit_value)
 
@@ -387,10 +394,7 @@ class ElementWrapper(object):
                 name = input.attrib['name']
             except KeyError:
                 continue
-            try:
-                value = input.submit_value
-            except NotImplementedError:
-                continue
+            value = input.submit_value
             if value is None:
                 continue
             elif isinstance(value, basestring):
