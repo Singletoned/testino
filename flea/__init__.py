@@ -513,7 +513,7 @@ class TestAgent(object):
 
         - ``body`` - the body response as a string
 
-        - ``lxmldoc`` - the lxml representation of the response body (only
+        - ``lxml`` - the lxml representation of the response body (only
            applicable for HTML responses)
 
         - ``reset()`` - reset the TestAgent object to its initial state, discarding any form
@@ -525,7 +525,7 @@ class TestAgent(object):
     """
 
     response_class = MockResponse
-    _lxmldoc = None
+    _lxml= None
 
     environ_defaults = {
         'SCRIPT_NAME': "",
@@ -739,21 +739,21 @@ class TestAgent(object):
         return self.response.body
 
     @property
-    def lxmldoc(self):
-        if self._lxmldoc is not None:
-            return self._lxmldoc
+    def lxml(self):
+        if self._lxml is not None:
+            return self._lxml
         self.reset()
-        return self._lxmldoc
+        return self._lxml
 
     @property
     def root_element(self):
-        return ElementWrapper(self, self.lxmldoc)
+        return ElementWrapper(self, self.lxml)
 
     def reset(self):
         """
         Reset the lxml document, abandoning any changes made
         """
-        self._lxmldoc = fromstring(self.response.body)
+        self._lxml = fromstring(self.response.body)
 
     def find(self, path, **kwargs):
         """
@@ -765,7 +765,7 @@ class TestAgent(object):
         If the xpath selects any other type (eg a string attribute value), the
         result of the query is returned directly.
         """
-        result = self.lxmldoc.xpath(path, **kwargs)
+        result = self.lxml.xpath(path, **kwargs)
 
         if not isinstance(result, list):
             return result
@@ -786,7 +786,7 @@ class TestAgent(object):
         """
         selector = CSSSelector(selector)
         return ResultWrapper(
-            ElementWrapper(self, el) for el in selector(self.lxmldoc)
+            ElementWrapper(self, el) for el in selector(self.lxml)
         )
 
     def click(self, path, follow=False, **kwargs):
