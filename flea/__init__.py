@@ -17,7 +17,11 @@ from pesto.utils import MultiDict
 
 __version__ = "1"
 
+# Registry for xpath multimethods
 xpath_registry = {}
+
+# EXSLT regular expression namespace URI
+REGEXP_NAMESPACE = "http://exslt.org/regular-expressions"
 
 class XPathMultiMethod(object):
     """
@@ -445,7 +449,6 @@ class ElementWrapper(object):
     def __contains__(self, what):
         return what in self.html()
 
-
 class ResultWrapper(list):
     """
     Wrap a list of elements (``ElementWrapper`` objects) returned from an xpath
@@ -755,7 +758,7 @@ class TestAgent(object):
         """
         self._lxml = fromstring(self.response.body)
 
-    def find(self, path, **kwargs):
+    def find(self, path, namespaces=None, **kwargs):
         """
         Return elements matching the given xpath expression.
 
@@ -764,8 +767,17 @@ class TestAgent(object):
 
         If the xpath selects any other type (eg a string attribute value), the
         result of the query is returned directly.
+
+        For convenience that the EXSLT regular expression namespace
+        (``http://exslt.org/regular-expressions``) is prebound to
+        the prefix ``re``.
         """
-        result = self.lxml.xpath(path, **kwargs)
+        ns = {'re': REGEXP_NAMESPACE}
+        if namespaces is not None:
+            ns.update(namespaces)
+        namespaces = ns
+
+        result = self.lxml.xpath(path, namespaces=namespaces, **kwargs)
 
         if not isinstance(result, list):
             return result
@@ -853,7 +865,6 @@ class TestAgent(object):
         At end of context block, reset the lxml document
         """
         self.reset()
-
 
 def uri_join_same_server(baseuri, uri):
     """

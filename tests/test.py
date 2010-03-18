@@ -383,3 +383,8 @@ def test_in_operator_works_on_elementwrapper():
     assert 'tea tray' in agent['//p']
     assert 'tea tray' in agent['//p'][0]
 
+def test_regexes_enabled_in_xpath():
+    agent = TestAgent(Response(['<html><p>salt</p><p>pepper</p><p>pickle</p>'])).get('/')
+    assert [tag.text for tag in agent.find("//*[re:test(text(), '^p')]")] == ['pepper', 'pickle']
+    assert [tag.text for tag in agent.find("//*[re:test(text(), '.*l')]")] == ['salt', 'pickle']
+
