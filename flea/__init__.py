@@ -15,7 +15,7 @@ from pesto.wsgiutils import uri_join, make_query
 from pesto.httputils import parse_querystring
 from pesto.utils import MultiDict
 
-__version__ = "1"
+__version__ = "2"
 
 # Registry for xpath multimethods
 xpath_registry = {}
