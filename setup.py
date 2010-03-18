@@ -20,7 +20,7 @@ def read(*path):
 
 setup(
     name='flea',
-    version='1',
+    version='2',
     description="Test WSGI applications using lxml",
     long_description=read('README'),
     classifiers=[
