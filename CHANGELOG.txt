@@ -1,6 +1,8 @@
-Version 2
+Version 3
 
-Thu Mar 18 11:02:33 CET 2010  oliver@redgecko.org
+  * Updated setup.py for compatibility with pesto==14
+
+Version 2
 
   * EXSLT regular expression namespace is bound to 're' prefix by default, allowing regexps in xpath expressions.
 
