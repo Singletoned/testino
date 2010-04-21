@@ -45,6 +45,10 @@ You can now use this to navigate your WSGI application by...
                                                 <form name="login-form" action="/"></form>
                                                 <form name="contact" action="/"><button type="submit" name="send"/></form>
                                                 <form name="register" action="/register"></form>
+                                                <form name="upload" action="/">
+                                                        <input type="file" name="photo"/>
+                                                        <input type="text" name="title"/>
+                                                </form>
                         """]),
                         '/register': Response.redirect('/', Request(make_environ()))
                 })
@@ -80,16 +84,30 @@ Submitting forms:
 
 .. doctest::
 
-	>>> agent = agent["//form"].submit()
+	>>> agent["//input[@name='title']"].value = 'picture of me on holiday'
 	>>> agent = agent["//form[@name='login-form']"].submit()
 	>>> agent = agent["//form[@name='contact']//button[@name='send']"].submit()
 
- Following HTTP redirects:
+When testing file upload fields, you need to assign a tuple of ``(filename,
+content-type, data)``::
+
+
+
+	>>> agent["//input[@name='title']"].value = 'picture of me on holiday'
+
+        >>> # file data can be either a string
+	>>> agent["//input[@name='image']"].value = ('photo.jpg', 'image/jpeg', 'test data')
+
+        >>> # ...or a file object
+        >>> photo = open('my-photo.jpg', 'r')
+	>>> agent["//input[@name='image']"].value = ('photo.jpg', 'image/jpeg', photo)
+
+Following HTTP redirects::
  
  	>>> agent = agent["//form[@name='register']"].submit()
  	>>> agent = agent.follow()
  
- 	>>> # Or more succinctly...
+ 	>>> # Or just...
  	>>> agent = agent["//form"].submit(follow=True)
  
 Don't like XPath? Use CSS selectors instead::
