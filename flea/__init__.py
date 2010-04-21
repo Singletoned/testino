@@ -3,6 +3,8 @@ from cStringIO import StringIO
 from urlparse import urlparse, urlunparse
 from Cookie import BaseCookie
 from functools import wraps
+from itertools import chain
+from shutil import copyfileobj
 import re
 
 from lxml.html import fromstring, tostring
@@ -151,6 +153,30 @@ class ElementWrapper(object):
                 del el.attrib['checked']
         if not found:
             raise AssertionError("Value %r not present in radio button group %r" % (value, self.element.attrib.get('name')))
+
+    @when("input[@type='file']")
+    def _set_value(self, value):
+        """
+        Set the value of the file upload, which must be a tuple of::
+
+            (filename, content-type, data)
+
+        Where data can either be a byte string or file-like object.
+        """
+        filename, content_type, data = value
+        self.agent.file_uploads[self.element] = (filename, content_type, data)
+
+        # Set the value in the DOM to the filename so that it can be seen when
+        # the DOM is displayed
+        self.element.attrib['value'] = filename
+
+    @when("input[@type='file']")
+    def _get_value(self):
+        """
+        Return the value of the file upload, which will be a tuple of
+        ``(filename, content-type, data)``
+        """
+        return self.agent.file_uploads.get(self.element)
 
     @when("input|button")
     def _get_value(self):
@@ -376,8 +402,9 @@ class ElementWrapper(object):
         return {
             ('GET', None): self.agent.get,
             ('POST', None): self.agent.post,
+            ('POST', 'application/x-www-form-urlencoded'): self.agent.post,
             ('POST', 'multipart/form-data'): self.agent.post_multipart,
-        }[(method, self.element.attrib.get('encoding'))](path, data, follow=follow)
+        }[(method, self.element.attrib.get('enctype'))](path, data, follow=follow)
 
     @when("form")
     def submit_data(self, button=None):
@@ -401,8 +428,13 @@ class ElementWrapper(object):
             value = input.submit_value
             if value is None:
                 continue
+
+            elif input.attrib.get('type') == 'file' and isinstance(value, tuple):
+                data.append((name, value))
+
             elif isinstance(value, basestring):
                 data.append((name, value))
+
             else:
                 data += [(name, v) for v in value]
 
@@ -551,6 +583,10 @@ class TestAgent(object):
         self.app = app
         self.request = request
         self.response = response
+
+        # Stores file upload field values in forms
+        self.file_uploads = {}
+
         if cookies:
             self.cookies = cookies
         else:
@@ -676,25 +712,34 @@ class TestAgent(object):
         if files is None:
             files = []
 
+        def add_headers(key, value):
+            """
+            Return a tuple of ``([(header-name, header-value), ...], data)``
+            for the given key/value pair
+            """
+            if isinstance(value, tuple):
+                filename, content_type, data = value
+                headers = [
+                    ('Content-Disposition',
+                     'form-data; name="%s"; filename="%s"' % (key, filename)),
+                    ('Content-Type', content_type)
+                ]
+                return headers, data
+            else:
+                if isinstance(value, unicode):
+                    value = value.encode(charset)
+                headers = [
+                    ('Content-Disposition',
+                    'form-data; name="%s"' % (key,))
+                ]
+                return headers, value
+
         items = chain(
-            (
-                (
-                    [
-                        ('Content-Disposition',
-                         'form-data; name="%s"' % (name,))
-                    ],
-                    data.encode(charset)
-                ) for name, value in data
-            ), (
-                (
-                    [
-                        ('Content-Disposition',
-                         'form-data; name="%s"; filename="%s"' % (name, fname)),
-                        ('Content-Type', content_type)
-                    ], data
-                ) for name, fname, content_type, data in files
-            )
+            (add_headers(k, v) for k, v in data),
+            (add_headers(k, (fname, ctype, data)) for k, fname, ctype, data in files),
         )
+
+        CRLF = '\r\n'
         post_data = StringIO()
         post_data.write('--' + boundary)
         for headers, data in items:

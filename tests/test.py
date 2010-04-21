@@ -1,3 +1,5 @@
+from StringIO import StringIO
+
 from flea import TestAgent
 from nose.tools import assert_equal
 
@@ -270,6 +272,49 @@ def test_form_disabled():
 def test_form_input_no_type():
     form_page = TestAgent(FormApp('<input name="t" value="1" />')).get('/')
     assert_equal(form_page['//form'].form.submit().body, 't:<1>')
+
+def test_form_file_input_value_requires_3tuple():
+    r = TestAgent(FormApp('<input name="upload" type="file" />')).get('/')
+    try:
+        r['//input'].value = 'photo.jpg'
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("Expecting a ValueError")
+
+    r = TestAgent(FormApp('<input name="upload" type="file" />')).get('/')
+    try:
+        r['//input'].value = ('photo.jpg', '123123')
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("Expecting a ValueError")
+
+    r['//input'].value = ('photo.jpg', 'text/jpeg', '123123')
+
+def test_form_file_input_requires_stores_values():
+    r = TestAgent(FormApp('<input name="upload" type="file" />')).get('/')
+    r['//input'].value = ('photo.jpg', 'text/jpeg', '123123')
+    assert_equal(r['//input'].value, ('photo.jpg', 'text/jpeg', '123123'))
+
+def test_form_file_input_submits_file_data():
+
+    class TestApp(FormApp):
+        def POST(self, environ, start_response):
+            from pesto.httputils import FileUpload
+            req = Request(environ)
+            fu = req.form['upload']
+            assert isinstance(fu, FileUpload)
+            assert fu.file.read() == '123123'
+            return Response(['ok'])(environ, start_response)
+
+    r = TestAgent(TestApp('<input name="upload" type="file" />', enctype="multipart/form-data")).get('/')
+    r['//input'].value = ('photo.jpg', 'text/jpeg', '123123')
+    r['//form'].submit()
+
+    r = TestAgent(TestApp('<input name="upload" type="file" />', enctype="multipart/form-data")).get('/')
+    r['//input'].value = ('photo.jpg', 'text/jpeg', StringIO('123123'))
+    r['//form'].submit()
 
 
 def test_form_submit_button():
