@@ -664,6 +664,9 @@ class TestAgent(object):
         if data is not None:
             kwargs.setdefault('QUERY_STRING', make_query(data, charset=charset))
 
+        if self.request:
+            PATH_INFO = uri_join_same_server(self.request.request_uri, PATH_INFO)
+
         return self._request(
             self.make_environ('GET', PATH_INFO=PATH_INFO, **kwargs),
             follow,
@@ -676,6 +679,9 @@ class TestAgent(object):
         """
         if data is None:
             data = []
+
+        if self.request:
+            PATH_INFO = uri_join_same_server(self.request.request_uri, PATH_INFO)
 
         data = make_query(data, charset=charset)
         wsgi_input = StringIO(data)
@@ -706,11 +712,16 @@ class TestAgent(object):
             may be either a byte string, iterator or file-like object.
         """
 
-        boundary = '----------------------------------------BoUnDaRyVaLuE'
         if data is None:
             data = {}
+
         if files is None:
             files = []
+
+        if self.request:
+            PATH_INFO = uri_join_same_server(self.request.request_uri, PATH_INFO)
+
+        boundary = '----------------------------------------BoUnDaRyVaLuE'
 
         def add_headers(key, value):
             """
@@ -851,10 +862,7 @@ class TestAgent(object):
 
     def _click(self, element, follow=False):
         return self.get(
-            uri_join_same_server(
-                self.request.request_uri,
-                element.attrib['href']
-            ),
+            element.attrib['href'],
             follow=follow
         )
 
@@ -873,10 +881,7 @@ class TestAgent(object):
             )
 
         return self.get(
-            uri_join_same_server(
-                self.request.request_uri,
-                self.response.get_header('Location')
-            ),
+            self.response.get_header('Location'),
             history=False,
         )
 
@@ -922,6 +927,8 @@ def uri_join_same_server(baseuri, uri):
         '/bar'
         >>> uri_join_same_server('http://localhost/foo', 'http://localhost/bar')
         '/bar'
+        >>> uri_join_same_server('http://localhost/rhubarb/custard/', '../')
+        '/rhubarb'
         >>> uri_join_same_server('http://localhost/foo', 'http://example.org/bar')
         Traceback (most recent call last):
           ...

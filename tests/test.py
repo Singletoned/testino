@@ -446,3 +446,18 @@ def test_regexes_enabled_in_xpath():
     assert [tag.text for tag in agent.find("//*[re:test(text(), '^p')]")] == ['pepper', 'pickle']
     assert [tag.text for tag in agent.find("//*[re:test(text(), '.*l')]")] == ['salt', 'pickle']
 
+def test_get_allows_relative_uri():
+
+    agent = TestAgent(Response(['<html><p>salt</p><p>pepper</p><p>pickle</p>']))
+    try:
+        agent.get('../')
+    except AssertionError:
+        # Expect an AssertionError, as we haven't made an initial request to be
+        # relative to
+        pass
+    else:
+        raise AssertionError("Didn't expect relative GET request to work")
+    agent = agent.get('/rhubarb/custard/')
+    agent = agent.get('../')
+    assert_equal(agent.request.request_uri, 'http://localhost/rhubarb')
+
