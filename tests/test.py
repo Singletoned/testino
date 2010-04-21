@@ -14,30 +14,43 @@ def page(html):
         return page
     return page
 
-def makeformapp(formhtml, action=None):
+class FormApp(object):
     """
-    Return a WSGI application that responds to GET requests with the given
+    A WSGI application that responds to GET requests with the given
     HTML, and POST requests with a dump of the posted info
     """
 
-    if action is None:
-        action = "/"
 
-    def app(environ, start_response):
+    def __init__(self, formhtml, action=None, enctype="application/x-www-form-urlencoded"):
 
-        if environ['REQUEST_METHOD'] == 'GET':
-            return Response(
-                ['<html><body><form method="POST" action="%s">%s</form></body></html>' % (action, formhtml)]
-            )(environ, start_response)
+        if action is None:
+            action = "/"
 
+        self.formhtml = formhtml
+        self.action = action
+        self.enctype = enctype
+
+    def __call__(self, environ, start_response):
+        return getattr(self, environ['REQUEST_METHOD'])(environ, start_response)
+
+    def GET(self, environ, start_response):
+        return Response(
+            [
+                '<html><body><form method="POST" action="%s" enctype="%s">%s</form></body></html>' % (
+                    self.action,
+                    self.enctype,
+                    self.formhtml,
+                )
+            ]
+        )(environ, start_response)
+
+    def POST(self, environ, start_response):
         return Response([
                 '; '.join(
                     "%s:<%s>" % (name, value)
                     for (name, value) in sorted(Request(environ).form.allitems())
                 )
         ])(environ, start_response)
-
-    return app
 
 class testapp(object):
 
@@ -180,7 +193,7 @@ def test_form_checkbox():
     )
 
 def test_form_textarea():
-    form_page = TestAgent(makeformapp('<textarea name="t"></textarea>')).get('/')
+    form_page = TestAgent(FormApp('<textarea name="t"></textarea>')).get('/')
     el = form_page['//textarea']
     el.value = 'test'
     assert_equal(
@@ -189,7 +202,7 @@ def test_form_textarea():
     )
 
 def test_form_select():
-    app = makeformapp("""
+    app = FormApp("""
         <select name="s">
         <option value="o1"></option>
         <option value="o2"></option>
@@ -205,7 +218,7 @@ def test_form_select():
     assert_equal(r['//form'].submit().body, 's:<o1>')
 
 def test_form_select_multiple():
-    app = makeformapp("""
+    app = FormApp("""
         <select name="s" multiple="">
         <option value="o1"></option>
         <option value="o2"></option>
@@ -222,7 +235,7 @@ def test_form_select_multiple():
     assert_equal(r['//form'].submit().body, 's:<o2>; s:<o3>')
 
 def test_form_radio():
-    app = makeformapp("""
+    app = FormApp("""
         <input name="a" value="1" type="radio"/>
         <input name="a" value="2" type="radio"/>
         <input name="b" value="3" type="radio"/>
@@ -239,7 +252,7 @@ def test_form_radio():
     assert_equal(r['//form'].submit().body, 'a:<2>')
 
 def test_form_hidden():
-    form_page = TestAgent(makeformapp('<input name="t" value="1" type="hidden"/>')).get('/')
+    form_page = TestAgent(FormApp('<input name="t" value="1" type="hidden"/>')).get('/')
     assert_equal(
         form_page['//form'].form.submit().body,
         't:<1>'
@@ -247,7 +260,7 @@ def test_form_hidden():
 
 
 def test_form_disabled():
-    form_page = TestAgent(makeformapp('<input name="t" value="1" type="text" disabled="" />')).get('/')
+    form_page = TestAgent(FormApp('<input name="t" value="1" type="text" disabled="" />')).get('/')
     assert_equal(
         form_page['//form'].form.submit().body,
         ''
@@ -255,12 +268,12 @@ def test_form_disabled():
 
 
 def test_form_input_no_type():
-    form_page = TestAgent(makeformapp('<input name="t" value="1" />')).get('/')
+    form_page = TestAgent(FormApp('<input name="t" value="1" />')).get('/')
     assert_equal(form_page['//form'].form.submit().body, 't:<1>')
 
 
 def test_form_submit_button():
-    app = makeformapp('''
+    app = FormApp('''
         <input id="1" type="submit" name="s" value="1"/>
         <input id="2" type="submit" name="s" value="2"/>
         <input id="3" type="submit" name="t" value="3"/>
@@ -301,7 +314,7 @@ def test_form_submit_button():
         raise AssertionError("Shouldn't be able to call submit_data on a non-submit button")
 
 def test_form_action_fully_qualified_uri_doesnt_error():
-    app = makeformapp("", action='http://localhost/')
+    app = FormApp("", action='http://localhost/')
     r = TestAgent(app).get('/')
     assert_equal(r['//form'].submit().body, '')
 
