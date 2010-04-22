@@ -1,10 +1,17 @@
+Version 4
+
+  * Added support for file upload fields
+
+  * Allow TestAgent.get/post etc to take a relative URI as an argument
+
 Version 3
 
   * Updated setup.py for compatibility with pesto==14
 
 Version 2
 
-  * EXSLT regular expression namespace is bound to 're' prefix by default, allowing regexps in xpath expressions.
+  * EXSLT regular expression namespace is bound to ``re`` prefix by default,
+    allowing regexps in xpath expressions.
 
   * Bug fixes for form element handling
 
