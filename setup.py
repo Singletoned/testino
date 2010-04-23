@@ -20,7 +20,7 @@ def read(*path):
 
 setup(
     name='flea',
-    version='4',
+    version='5',
     description="Test WSGI applications using lxml",
     long_description=read('README'),
     classifiers=[
@@ -40,7 +40,7 @@ setup(
     include_package_data=True,
     zip_safe=False,
     install_requires=[
-        'pesto ==12, ==13, ==14',
+        'pesto ==12, ==13, ==15',
         'lxml',
         # -*- Extra requirements: -*-
     ],
