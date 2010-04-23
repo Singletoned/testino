@@ -40,7 +40,7 @@ setup(
     include_package_data=True,
     zip_safe=False,
     install_requires=[
-        'pesto ==12, ==13, ==15',
+        'pesto>=16',
         'lxml',
         # -*- Extra requirements: -*-
     ],
