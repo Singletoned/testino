@@ -1,3 +1,7 @@
+Version 5
+
+  * Updated setup.py for compatibility with pesto==15
+
 Version 4
 
   * Added support for file upload fields
