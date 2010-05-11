@@ -166,7 +166,7 @@ def test_click():
         3
     )
     assert_raises(
-        testino.MultipleMatchesException,
+        testino.MultipleMatchesError,
         page.one,
         "//a"
     )
