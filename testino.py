@@ -861,6 +861,10 @@ class TestAgent(object):
             return super(TestAgent, self).__str__()
 
     @property
+    def status(self):
+        return self.response.status
+
+    @property
     def body(self):
         return self.response.data
 
