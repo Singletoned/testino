@@ -607,6 +607,39 @@ class ElementWrapper(object):
 
         return data
 
+    @when("form")
+    def fill(self, *pairs, **data):
+        """
+        Fill the current form with data.
+
+        *pairs
+            Pairs of (xpath, value)
+
+        **data
+            Dictionary of (fieldname => value) mappings. Values may be lists,
+            in which case multiple fields of the same name will be assigned
+            values. 
+
+        """
+
+        data = data.items()
+        data = ((key, value if isinstance(value, list) else [value]) for key, value in data)
+        data = (
+            (
+                """
+                    .//*[
+                        (local-name() = 'input' or local-name() = 'textarea' or local-name() = 'select')
+                        and (@name='{fieldname}' or @id='{fieldname}')
+                    ][{index}]
+                """.format(fieldname=fieldname, index=ix+1),
+                item
+            ) for fieldname, values in data for ix, item in enumerate(values)
+        )
+
+        for path, value in chain(data, pairs):
+            self[path].value = value
+        return self
+
     def html(self, encoding=unicode):
         """
         Return an HTML representation of the element.  Defaults to returning unicode
