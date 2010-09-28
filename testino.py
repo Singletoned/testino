@@ -576,6 +576,13 @@ class ElementWrapper(object):
         return self.form.submit(self, follow)
 
     @when("input[@type='submit' or @type='image']|button[@type='submit' or not(@type)]")
+    def click(self, follow=False):
+        """
+        Alias for submit
+        """
+        return self.submit(follow)
+
+    @when("input[@type='submit' or @type='image']|button[@type='submit' or not(@type)]")
     def submit_data(self):
         """
         Submit the form, returning a new ``TestAgent`` object, by clicking on
