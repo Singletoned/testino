@@ -409,9 +409,12 @@ class ElementWrapper(object):
         Return the value of the (non-multiple) select box
         """
         try:
-            return self.element.xpath('./option[@selected]')[0].attrib['value']
-        except (KeyError, IndexError):
+            element = self.element.xpath('./option[@selected]')[0]
+        except IndexError:
+            element = self.element.xpath('./option[1]')[0]
+        except IndexError:
             return None
+        return element.attrib.get('value', element.text)
 
     @when("select")
     def _set_value(self, value):

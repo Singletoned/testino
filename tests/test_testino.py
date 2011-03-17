@@ -621,14 +621,16 @@ def test_form_select():
         </select>
     """)
     r = TestAgent(app).get('/')
+    assert_equal(r.form.submit().body, 's:<o1>')
+
     r.one('//select').value = 'o2'
     assert r.one('//select/option[2]').selected
-    assert_equal(r.one('//form').submit().body, 's:<o2>')
+    assert_equal(r.form.submit().body, 's:<o2>')
 
     r = TestAgent(app).get('/')
     r.one('//select/option[2]').selected = True
     r.one('//select/option[1]').selected = True
-    assert_equal(r.one('//form').submit().body, 's:<o1>')
+    assert_equal(r.form.submit().body, 's:<o1>')
 
 def test_form_select_select():
     app = FormApp("""
