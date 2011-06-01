@@ -523,7 +523,27 @@ class ElementWrapper(object):
         """
         Sets the value of the element that has the same name as the given key.  It is an error if there is more than one matching element.
         """
-        self.one(".//*[@name='%s']" % (key,)).value = value
+        xpath = ".//*[@name='%s']" % key
+        if not isinstance(value, (tuple, list)):
+            self.one(xpath).value = value
+        else:
+            elements = self.all(".//*[@name='%s']" % key)
+            checkboxes = [
+                element for element in elements
+                if element.element.get('type', '')=="checkbox"]
+            value = set(value)
+            checked_values = set()
+            if len(checkboxes) == len(elements):
+                for element in elements:
+                    if element.element.get('value') in value:
+                        element.checked = True
+                        checked_values.add(element.element.get('value'))
+                    else:
+                        element.checked = False
+                if value>checked_values:
+                    raise ValueError("Values %s not in element" % list(value-checked_values))
+            else:
+                raise MultipleMatchesError(xpath.encode('utf8'), elements)
 
     @when("form")
     def submit(self, button=None, follow=False):

@@ -503,6 +503,15 @@ def test_form_getitem_doesnt_match():
     form = form_page.one(u"//form")
     assert form[u"foo"] == u"a"
 
+def test_form_setitem():
+    form_page = TestAgent(TestApp()).get('/form-checkbox')
+    form = form_page.one('//form')
+    assert_raises(
+        ValueError,
+        form.__setitem__,
+        'a',
+        ['1', '2', '3'])
+
 def test_form_textarea():
     form_page = TestAgent(FormApp('<textarea name="t"></textarea>')).get('/')
     el = form_page.one('//textarea')
