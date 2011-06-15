@@ -498,6 +498,12 @@ def test_form_getitem():
     assert form.one(u'//input').value == u'flibble'
     assert form.one(u'//select').value == u'a'
 
+    # Test checkboxes
+    form_page = TestAgent(TestApp()).get('/form-checkbox')
+    form = form_page.one('//form')
+    assert form['a'] == []
+    assert form['b'] == ["A"]
+
 def test_form_getitem_doesnt_match():
     form_text = html.body(
         html.form(

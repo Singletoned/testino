@@ -514,9 +514,19 @@ class ElementWrapper(object):
     @when("form")
     def __getitem__(self, key):
         """
-        Returns the value of the element that has the same name as the given key.  It is an error if there is more than one matching element.
+        Returns the value of the element that has the same name as the given key.  It is an error if there is more than one matching element, unless they are checkboxes.
         """
-        return self.one(".//*[@name='%s']" % (key,)).value
+        try:
+            return self.one(".//*[@name='%s']" % (key,)).value
+        except MultipleMatchesError:
+            elements = self.all(".//*[@name='%s']" % key)
+            checkboxes = [
+                element for element in elements
+                if element.element.get('type', '')=="checkbox"]
+            if len(elements) != len(checkboxes):
+                raise MultipleMatchesError(xpath.encode('utf8'), elements)
+            else:
+                return [cb.value for cb in checkboxes if cb.checked]
 
     @when("form")
     def __setitem__(self, key, value):
