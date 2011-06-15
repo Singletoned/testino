@@ -469,6 +469,11 @@ def test_form_checkbox():
     form.one('//input[@name="a"][2]').checked = True
     form.one('//input[@name="b"][1]').checked = False
     form.one('//input[@name="b"][2]').checked = True
+    assert form.one('//input[@name="a"][1]').checked == True
+    assert form.one('//input[@name="a"][2]').checked == True
+    assert form.one('//input[@name="b"][1]').checked == False
+    assert form.one('//input[@name="b"][2]').checked == True
+    
     assert_equal(
         form.submit().body,
         "a:<1>; a:<2>; b:<B>"

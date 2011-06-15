@@ -420,7 +420,7 @@ class ElementWrapper(object):
 
     submit_value = property(submit_value)
 
-    def _get_checked(self, value):
+    def _get_checked(self):
         """
         Return True if the element has the checked attribute
         """
