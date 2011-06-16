@@ -409,7 +409,7 @@ class ElementWrapper(object):
 
         if 'disabled' in self.element.attrib:
             return None
-        return self.value
+        return self.value or ""
 
     @when("input[@type != 'submit' or @type != 'image' or @type != 'reset']")
     def submit_value(self):

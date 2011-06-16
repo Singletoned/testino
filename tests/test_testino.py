@@ -525,12 +525,22 @@ def test_form_setitem():
 
 def test_form_textarea():
     form_page = TestAgent(FormApp('<textarea name="t"></textarea>')).get('/')
+    # Test empty submission
+    form = form_page.form
+    data = form.submit_data()
+    assert data == [("t", "")]
     el = form_page.one('//textarea')
+    assert el.submit_value == ""
+    # Test non empty submission
     el.value = 'test'
     assert_equal(
         form_page.one('//textarea').form.submit().body,
         't:<test>'
     )
+    assert el.submit_value == 'test'
+    form = form_page.form
+    form['t'] = "Mr Flibble says hello!"
+    assert form.submit_data() == [("t", "Mr Flibble says hello!")]
 
 def test_form_select():
     app = FormApp("""
