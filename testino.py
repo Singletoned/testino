@@ -220,7 +220,7 @@ class ElementWrapper(object):
         """
         Return a list of the row headers
         """
-        headers = [el.text for el in self.all(u"tr/th")]
+        headers = [el.text_content().strip() for el in self.all(u"thead/tr/th")]
         return headers
 
     @when("tr")
@@ -228,7 +228,7 @@ class ElementWrapper(object):
         """
         Return a list of the row headers
         """
-        headers = [el.text for el in self.all(u"../tr/th")]
+        headers = [el.text_content().strip() for el in self.all(u"../thead/tr/th")]
         return headers
 
     @when("table")

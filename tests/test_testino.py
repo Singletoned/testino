@@ -261,9 +261,11 @@ def test_click():
 def test_rows_to_dict():
     body_1 = """
 <table>
-  <tr>
-    <th>foo</th> <th>bar</th> <th>baz</th>
-  </tr>
+  <thead>
+    <tr>
+      <th>foo</th> <th>bar</th> <th>baz</th>
+    </tr>
+  </thead>
   <tr>
     <td>
       1
@@ -282,9 +284,11 @@ def test_rows_to_dict():
     """
     body_2 = """
 <table>
-  <tr>
-    <th>foo</th> <th>bar</th> <th>baz</th>
-  </tr>
+  <thead>
+    <tr>
+      <th><a href="">foo</a></th> <th>bar</th> <th>baz</th>
+    </tr>
+  </thead>
   <tr>
     <td>1</td> <td>2</td> <td>3</td>
   </tr>
@@ -296,6 +300,7 @@ def test_rows_to_dict():
     for body in [body_1, body_2]:
         agent = TestAgent(Response(body)).get('/')
         row = agent.one(u'//tr[td][1]')
+        assert row.headers() == ["foo", "bar", "baz"]
         expected = dict(foo='1', bar='2', baz='3')
         for key in expected:
             assert_equal(expected[key], row.to_dict()[key])
@@ -303,8 +308,9 @@ def test_rows_to_dict():
 def test_tables():
     header_values = ["foo", "bar", "baz"]
     table_text = html.table(
-        html.tr(
-            *[html.th(i) for i in header_values]),
+        html.thead(
+            html.tr(
+                *[html.th(html.span(i+" ")) for i in header_values])),
         html.tr(
             *[html.td(i) for i in [1, 2, 3]]),
         html.tr(
