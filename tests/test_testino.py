@@ -1,7 +1,8 @@
 from StringIO import StringIO
 
-from flea import TestAgent
 from nose.tools import assert_equal
+
+from testino import TestAgent
 
 from pesto import dispatcher_app, Response
 from pesto.request import Request
@@ -459,5 +460,5 @@ def test_get_allows_relative_uri():
         raise AssertionError("Didn't expect relative GET request to work")
     agent = agent.get('/rhubarb/custard/')
     agent = agent.get('../')
-    assert_equal(agent.request.request_uri, 'http://localhost/rhubarb')
+    assert_equal(agent.request.request_uri, 'http://localhost/rhubarb/')
 
