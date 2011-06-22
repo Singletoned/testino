@@ -63,6 +63,36 @@ class FormApp(object):
                 )
         ])(environ, start_response)
 
+def dispatch(url_map, environ, start_response):
+    request = wz.Request(environ)
+    request.url_map = url_map.bind_to_environ(environ)
+    try:
+        endpoint, kwargs = request.url_map.match()
+        response = endpoint(request, **kwargs)
+    except wz.exceptions.HTTPException, e:
+        response = e
+    return response(environ, start_response)
+
+def GET(path=None):
+    return (u"GET", func)
+
+def POST(path=None):
+    return (u"POST", func)
+
+class MockAppMeta(type):
+    def __new__(meta, cls_name, bases, cls_dict):
+        cls = type.__new__(meta, cls_name, bases, cls_dict)
+        cls.url_map = wz.routing.Map()
+        for key, value in cls_dict.items():
+            if not key.startswith("__"):
+                cls.url_map.add(
+                    wz.routing.Rule("/"+key, methods=[value[0]], endpoint=value[1]))
+        return cls
+
+class MockApp(object):
+    __metaclass__ = MockAppMeta
+    def __new__(cls, environ, start_response):
+        return dispatch(cls.url_map, environ, start_response)
 
 url_map = wz.routing.Map()
 
@@ -75,14 +105,7 @@ def match(rule, method):
 
 class TestApp(object):
     def __call__(self, environ, start_response):
-        request = wz.Request(environ)
-        request.url_map = url_map.bind_to_environ(environ)
-        try:
-            endpoint, kwargs = request.url_map.match()
-            response = endpoint(request, **kwargs)
-        except wz.exceptions.HTTPException, e:
-            response = e
-        return response(environ, start_response)
+        return dispatch(url_map, environ, start_response)
 
     @match('/redirect1', 'GET')
     def redirect1(request):
