@@ -212,6 +212,25 @@ class TestApp(object):
                 '; '.join("%s:<%s>" % (name, value) for (name, value) in sorted(request.cookies.items()))
         ])
 
+def test_all():
+    page = TestAgent(TestApp()).get('/form-checkbox')
+    for name in ['a', 'b']:
+        elements = page.all("//input[@name=$name]", name=name)
+        for element in elements:
+            assert element.element.attrib['name'] == name
+
+    page = TestAgent(TestApp()).get('/form-checkbox')
+    form = page.form
+    data = [
+        dict(name="a", type="checkbox"),
+        dict(name="b", type="checkbox")]
+    for datum in data:
+        xpath = "input[@name=$name and @type=$type]"
+        elements = form.all(xpath, **datum)
+        for element in elements:
+            for key, value in datum.items():
+                assert element.element.attrib[key] == value
+
 def test_one():
     page = TestAgent(TestApp()).get('/page1')
     assert_raises(
@@ -224,6 +243,21 @@ def test_one():
         page.one,
         "//h1"
     )
+
+    for href in ['page1', 'page2']:
+        element = page.one("//a[@href=$href]", href=href)
+        assert element.element.attrib['href'] == href
+
+    page = TestAgent(TestApp()).get('/form-mixed')
+    form = page.form
+    data = [
+        dict(name="a", value="A", type="text"),
+        dict(name="b", value="B", type="text")]
+    for datum in data:
+        xpath = "input[@name=$name and @value=$value and @type=$type]"
+        element = form.one(xpath, **datum)
+        for key, value in datum.items():
+            assert element.element.attrib[key] == value
 
 def test_reset():
     agent = TestAgent(TestApp())

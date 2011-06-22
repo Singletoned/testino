@@ -184,12 +184,12 @@ class ElementWrapper(object):
     def lxml(self):
         return self.element
 
-    def one(self, xpath):
+    def one(self, xpath, **kwargs):
         """
         Return only one wrapped sub-element.  Raise
         MultipleMatchesError if more than one result
         """
-        elements = self.element.xpath(xpath)
+        elements = self.element.xpath(xpath, **kwargs)
         if len(elements) == 0:
             raise NoMatchesError(xpath.encode('utf8'))
         elif len(elements) > 1:
@@ -197,11 +197,11 @@ class ElementWrapper(object):
         else:
             return self.__class__(self.agent, elements[0])
 
-    def all(self, xpath):
+    def all(self, xpath, **kwargs):
         """
         Return all matching wrapped sub-elements.
         """
-        elements = self.element.xpath(xpath)
+        elements = self.element.xpath(xpath, **kwargs)
         return [self.__class__(self.agent, el) for el in elements]
 
     def reset(self):
@@ -1057,12 +1057,12 @@ class TestAgent(object):
         result = self.lxml.xpath(path, namespaces=namespaces, **kwargs)
         return result
 
-    def one(self, path, css=False):
+    def one(self, path, css=False, **kwargs):
         """
         Returns the first result from Agent.all.  Raises an error if
         more than one result is found.
         """
-        elements = self.all(path, css=css)
+        elements = self.all(path, css=css, **kwargs)
         if len(elements) > 1:
             raise MultipleMatchesError(path.encode('utf8'), elements)
         elif len(elements) == 0:
@@ -1070,11 +1070,11 @@ class TestAgent(object):
         else:
             return elements[0]
 
-    def all(self, path, css=False):
+    def all(self, path, css=False, **kwargs):
         """
         Returns the results of Agent.find, or Agent._findcss if css is True
         """
-        elements = self._find(path, css=css)
+        elements = self._find(path, css=css, **kwargs)
         return [ElementWrapper(self, el) for el in elements]
 
     @property
