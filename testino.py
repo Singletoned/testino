@@ -605,6 +605,9 @@ class TestAgent(object):
             SCRIPT_NAME = SCRIPT_NAME[:-1]
             PATH_INFO = "/" + PATH_INFO
 
+        if not SCRIPT_NAME:
+            assert not PATH_INFO.startswith('.')
+
         environ = cls.environ_defaults.copy()
         environ.update(kwargs)
         for key, value in kwargs.items():
