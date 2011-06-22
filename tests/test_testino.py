@@ -6,8 +6,8 @@ from StringIO import StringIO
 
 from nose.tools import assert_equal, assert_raises
 
-import werkzeug
-from werkzeug import Request, Response, redirect, html
+import werkzeug as wz
+from werkzeug import html
 
 from lxml.html import tostring
 
@@ -19,7 +19,7 @@ tostring = functools.partial(tostring, encoding="utf-8")
 def page(html):
     def page(func):
         def page(request, *args, **kwargs):
-            return Response(html % (func(request, *args, **kwargs)))
+            return wz.Response(html % (func(request, *args, **kwargs)))
         return page
     return page
 
@@ -44,7 +44,7 @@ class FormApp(object):
         return getattr(self, environ['REQUEST_METHOD'])(environ, start_response)
 
     def GET(self, environ, start_response):
-        return Response(
+        return wz.Response(
             [
                 '<html><body><form method="POST" action="%s" enctype="%s">%s</form></body></html>' % (
                     self.action,
@@ -55,8 +55,8 @@ class FormApp(object):
         )(environ, start_response)
 
     def POST(self, environ, start_response):
-        items = sorted(Request(environ).form.items(multi=True))
-        return Response([
+        items = sorted(wz.Request(environ).form.items(multi=True))
+        return wz.Response([
                 '; '.join(
                     "%s:<%s>" % (name, value)
                     for (name, value) in items
@@ -64,33 +64,33 @@ class FormApp(object):
         ])(environ, start_response)
 
 
-url_map = werkzeug.routing.Map()
+url_map = wz.routing.Map()
 
 def match(rule, method):
     def decorate(f):
-        r = werkzeug.routing.Rule(rule, methods=[method], endpoint=f)
+        r = wz.routing.Rule(rule, methods=[method], endpoint=f)
         url_map.add(r)
         return f
     return decorate
 
 class TestApp(object):
     def __call__(self, environ, start_response):
-        request = Request(environ)
+        request = wz.Request(environ)
         request.url_map = url_map.bind_to_environ(environ)
         try:
             endpoint, kwargs = request.url_map.match()
             response = endpoint(request, **kwargs)
-        except werkzeug.exceptions.HTTPException, e:
+        except wz.exceptions.HTTPException, e:
             response = e
         return response(environ, start_response)
 
     @match('/redirect1', 'GET')
     def redirect1(request):
-        return redirect('/redirect2')
+        return wz.redirect('/redirect2')
 
     @match('/redirect2', 'GET')
     def redirect2(request):
-        return redirect('/page1')
+        return wz.redirect('/page1')
 
     @match('/page1', 'GET')
     @page('''
@@ -146,7 +146,7 @@ class TestApp(object):
 
     @match('/form-mixed', 'GET')
     def form_mixed(request):
-        return Response('''
+        return wz.Response('''
         <html><body>
         <form method="POST" action="/postform">
           <fieldset>
@@ -163,13 +163,13 @@ class TestApp(object):
 
     @match('/postform', 'POST')
     def form_submit(request):
-        return Response([
+        return wz.Response([
                 '; '.join("%s:<%s>" % (name, value) for (name, value) in sorted(request.form.items(multi=True)))
         ])
 
     @match('/getform', 'GET')
     def form_submit(request):
-        return Response([
+        return wz.Response([
                 '; '.join("%s:<%s>" % (name, value) for (name, value) in sorted(request.args.items(multi=True)))
         ])
 
@@ -178,14 +178,14 @@ class TestApp(object):
         name = name or request.args['name']
         value = value or request.args['value']
         path = path or request.args.get('path', None) or '/'
-        response = Response(['ok'])
+        response = wz.Response(['ok'])
         response.set_cookie(name, value, path=path)
         return response
 
     @match('/cookies', 'GET')
     @match('/<path:path>/cookies', 'GET')
     def listcookies(request, path=None):
-        return Response([
+        return wz.Response([
                 '; '.join("%s:<%s>" % (name, value) for (name, value) in sorted(request.cookies.items()))
         ])
 
@@ -297,7 +297,7 @@ def test_rows_to_dict():
 </table>
     """
     for body in [body_1, body_2]:
-        agent = TestAgent(Response(body)).get('/')
+        agent = TestAgent(wz.Response(body)).get('/')
         row = agent.one(u'//tr[td][1]')
         assert row.headers() == ["foo", "bar", "baz"]
         expected = dict(foo='1', bar='2', baz='3')
@@ -314,7 +314,7 @@ def test_tables():
             *[html.td(i) for i in [1, 2, 3]]),
         html.tr(
             *[html.td(i) for i in [4, 5, 6]]))
-    agent = TestAgent(Response([table_text])).get(u'/')
+    agent = TestAgent(wz.Response([table_text])).get(u'/')
     table = agent.one(u"//table")
     rows = [row.to_dict() for row in table.rows()]
     headers = table.headers()
@@ -349,14 +349,14 @@ def test_empty_rows():
   </tr>
 </table>
     """
-    agent = TestAgent(Response(body)).get(u'/')
+    agent = TestAgent(wz.Response(body)).get(u'/')
     row = agent.one(u'//tr')
     row.assert_is([None, '', u''])
 
 def test_unicode_chars():
     body_text = html.div(
         html.p(u"£")).encode('utf-8')
-    agent = TestAgent(Response([body_text]))
+    agent = TestAgent(wz.Response([body_text]))
     page = agent.get(u'/')
     assert page.body == body_text
     assert tostring(page.lxml) == body_text
@@ -368,7 +368,7 @@ def test_unicode_chars():
 def test_html_returns_unicode():
     body_text = html.div(
         html.p(u"£")).encode('utf-8')
-    agent = TestAgent(Response([body_text]))
+    agent = TestAgent(wz.Response([body_text]))
     page = agent.get(u'/')
     assert page.html() == body_text.decode('utf-8')
     assert page.html('utf-8') == body_text
@@ -376,7 +376,7 @@ def test_html_returns_unicode():
 def test_lxml_attr_is_consistent():
     body_text = html.div(
         html.p(u"foo")).encode('utf-8')
-    agent = TestAgent(Response([body_text]))
+    agent = TestAgent(wz.Response([body_text]))
     page = agent.get(u'/')
     div_element = page.one('//div')
     assert page.lxml == div_element.lxml
@@ -514,7 +514,7 @@ def test_form_getitem_doesnt_match():
         html.form(
             html.input(name="foo", value="a")),
         html.input(name="foo", value="b"))
-    agent = TestAgent(Response([form_text]))
+    agent = TestAgent(wz.Response([form_text]))
     form_page = agent.get(u'/')
     form = form_page.one(u"//form")
     assert form[u"foo"] == u"a"
@@ -743,12 +743,11 @@ def test_form_file_input_submits_file_data():
 
     class TestApp(FormApp):
         def POST(self, environ, start_response):
-            from werkzeug import FileStorage
-            req = Request(environ)
+            req = wz.Request(environ)
             fu = req.files['upload']
-            assert isinstance(fu, FileStorage)
+            assert isinstance(fu, wz.FileStorage)
             assert fu.read() == '123123'
-            return Response(['ok'])(environ, start_response)
+            return wz.Response(['ok'])(environ, start_response)
 
     r = TestAgent(TestApp('<input name="upload" type="file" />', enctype="multipart/form-data")).get('/')
     r.one('//input').value = ('photo.jpg', 'text/jpeg', '123123')
@@ -865,14 +864,14 @@ def test_context_manager_allows_checkpointing_history():
     assert agent is saved
 
 def test_html_method_returns_string_representation():
-    agent = TestAgent(Response(['<p>I would like an ice lolly</p>'])).get('/')
+    agent = TestAgent(wz.Response(['<p>I would like an ice lolly</p>'])).get('/')
     assert_equal(
         agent.root_element.html(),
         '<p>I would like an ice lolly</p>'
     )
 
 def test_striptags_method_returns_string_representation():
-    agent = TestAgent(Response(['<p>And a nice <strong>cup of tea</strong>!</p>'])).get('/')
+    agent = TestAgent(wz.Response(['<p>And a nice <strong>cup of tea</strong>!</p>'])).get('/')
     assert_equal(
         agent.root_element.striptags(),
         'And a nice cup of tea!'
@@ -891,7 +890,7 @@ def test_striptags_keep_breaks():
     London </p>
     """
     expected = """10 Downing Street\nWestminster\nLondon"""
-    agent = TestAgent(Response(body)).get('/')
+    agent = TestAgent(wz.Response(body)).get('/')
     assert_equal(
         expected,
         agent.root_element.striptags(convert_breaks=True)
@@ -904,33 +903,33 @@ def test_striptags_handles_nesting():
         <td>line 2</td>
     </tr>
     """
-    agent = TestAgent(Response([body])).get('/')
+    agent = TestAgent(wz.Response([body])).get('/')
     assert_equal(
         agent.root_element.striptags(),
         "line 1 line 2"
     )
 
 def test_striptags_handles_trailing_newline():
-    agent = TestAgent(Response(['<tr><td>flimmel</td>\n</tr>'])).get('/')
+    agent = TestAgent(wz.Response(['<tr><td>flimmel</td>\n</tr>'])).get('/')
     assert_equal(
         agent.one('//td').striptags(),
         'flimmel'
     )
 
 def test_in_operator_works_on_elementwrapper():
-    agent = TestAgent(Response(['<p>Tea tray tea tray tea tray tea tray</p>'])).get('/')
+    agent = TestAgent(wz.Response(['<p>Tea tray tea tray tea tray tea tray</p>'])).get('/')
     assert 'tea tray' in agent.one('//p')
     assert 'tea tray' in agent.all('//p')[0]
     assert 'teat ray' not in agent.one('//p')
     assert 'teat ray' not in agent.all('//p')[0]
 
 def test_regexes_enabled_in_xpath():
-    agent = TestAgent(Response(['<html><p>salt</p><p>pepper</p><p>pickle</p>'])).get('/')
+    agent = TestAgent(wz.Response(['<html><p>salt</p><p>pepper</p><p>pickle</p>'])).get('/')
     assert [tag.text for tag in agent._find("//*[re:test(text(), '^p')]")] == ['pepper', 'pickle']
     assert [tag.text for tag in agent._find("//*[re:test(text(), '.*l')]")] == ['salt', 'pickle']
 
 def test_get_allows_relative_uri():
-    agent = TestAgent(Response(['<html><p>salt</p><p>pepper</p><p>pickle</p>']))
+    agent = TestAgent(wz.Response(['<html><p>salt</p><p>pepper</p><p>pickle</p>']))
     try:
         agent.get('../')
     except AssertionError:

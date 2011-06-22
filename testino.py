@@ -2,10 +2,10 @@
 
 from wsgiref.validate import validator as wsgi_validator
 from cStringIO import StringIO
-from urlparse import urlparse, urlunparse, urljoin
+import urlparse
 from Cookie import BaseCookie
-from functools import wraps
-from itertools import chain, groupby
+import functools
+import itertools
 from shutil import copyfileobj
 import re
 
@@ -13,8 +13,7 @@ import lxml.html
 from lxml.cssselect import CSSSelector
 from lxml.etree import XPath
 
-import werkzeug
-from werkzeug import Request, Response
+import werkzeug as wz
 
 def assert_equal(foo, bar, msg=None):
     assert foo == bar, msg or "%r != %r" % (foo, bar)
@@ -128,7 +127,7 @@ def when(xpath_expr):
             func = getattr(func, '__wrapped__')
         multimethod = xpath_registry.setdefault(func.__name__, XPathMultiMethod())
         multimethod.register(xpath_expr, func)
-        wrapped = wraps(func)(
+        wrapped = functools.wraps(func)(
             lambda self, *args, **kwargs: multimethod(self, *args, **kwargs)
         )
         wrapped.__wrapped__ = func
@@ -242,7 +241,7 @@ class ElementWrapper(object):
     def to_dict(self):
         cells = [el.striptags(convert_breaks=True) for el in self.all(u"td")]
         if cells:
-            return werkzeug.ImmutableOrderedMultiDict(zip(self.headers(), cells))
+            return wz.ImmutableOrderedMultiDict(zip(self.headers(), cells))
         else:
             return None
 
@@ -591,7 +590,7 @@ class ElementWrapper(object):
             return self.one(".//*[@name='%s']" % (key,)).value
         except MultipleMatchesError:
             elements = self.all(".//*[@name='%s']" % key)
-            values = [k for k,v in groupby(sorted(el.value for el in elements))]
+            values = [k for k,v in itertools.groupby(sorted(el.value for el in elements))]
             if len(values) == 1:
                 return values.pop()
             else:
@@ -747,7 +746,7 @@ class TestAgent(object):
            xpath expression against the current response body and return a list.
     """
 
-    response_class = Response
+    response_class = wz.Response
     _lxml= None
 
     environ_defaults = {
@@ -845,7 +844,7 @@ class TestAgent(object):
             history = self.history
 
         response = self.response_class.from_app(self.app, environ)
-        agent = self.__class__(self.app, Request(environ), response, self.cookies, history, validate_wsgi=False)
+        agent = self.__class__(self.app, wz.Request(environ), response, self.cookies, history, validate_wsgi=False)
         if status and (status != response.status):
             raise BadResponse(response.status, status)
         if response.status == "404 NOT FOUND":
@@ -861,7 +860,7 @@ class TestAgent(object):
         Make a GET request to the application and return the response.
         """
         if data is not None:
-            kwargs.setdefault('QUERY_STRING', werkzeug.url_encode(data, charset=charset, separator='&'))
+            kwargs.setdefault('QUERY_STRING', wz.url_encode(data, charset=charset, separator='&'))
 
         if self.request:
             PATH_INFO = uri_join_same_server(self.request.url, PATH_INFO)
@@ -883,7 +882,7 @@ class TestAgent(object):
         if self.request:
             PATH_INFO = uri_join_same_server(self.request.url, PATH_INFO)
 
-        data = werkzeug.url_encode(data, charset=charset, separator='&')
+        data = wz.url_encode(data, charset=charset, separator='&')
         wsgi_input = StringIO(data)
         wsgi_input.seek(0)
 
@@ -946,7 +945,7 @@ class TestAgent(object):
                 ]
                 return headers, value
 
-        items = chain(
+        items = itertools.chain(
             (add_headers(k, v) for k, v in data),
             (add_headers(k, (fname, ctype, data)) for k, fname, ctype, data in files),
         )
@@ -1162,11 +1161,11 @@ def uri_join_same_server(baseuri, uri):
 
     """
     # TODO: Maybe rhubarb should have a trailing slash
-    uri = urljoin(baseuri, uri)
-    uri = urlparse(uri)
-    if urlparse(baseuri)[:2] != uri[:2]:
-        raise ValueError("URI links to another server: %s" % (urlunparse(uri),))
-    return urlunparse((None, None) + uri[2:])
+    uri = urlparse.urljoin(baseuri, uri)
+    uri = urlparse.urlparse(uri)
+    if urlparse.urlparse(baseuri)[:2] != uri[:2]:
+        raise ValueError("URI links to another server: %s" % (urlparse.urlunparse(uri),))
+    return urlparse.urlunparse((None, None) + uri[2:])
 
 def parse_cookies(response):
     """
