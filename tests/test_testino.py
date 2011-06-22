@@ -219,7 +219,6 @@ def test_reset():
     input_b.value = u'flibble'
     assert input_b.value == u'flibble'
     page.reset()
-    print input_b.value
     assert input_b.value == u''
 
 def test_click():
