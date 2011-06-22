@@ -418,6 +418,15 @@ def test_lxml_attr_doesnt_reset_forms():
     assert form.one('//input[@name="a"][2]').value == 're'
     assert form.one('//input[@name="b"][1]').value == 'mi'
 
+def test_click_ignores_fragment():
+    class UrlFragmentApp(MockApp):
+        page1 = (u"GET", lambda r: wz.Response(['<a href="/page2#fragment">link to page 1</a>']))
+        page2 = (u"GET", lambda r: wz.Response(['This is page2']))
+    agent = TestAgent(UrlFragmentApp)
+    assert_equal(
+        agent.get('/page1').one("//a").click().request.path,
+        '/page2')
+
 def test_css_selectors_are_equivalent_to_xpath():
     page = TestAgent(TestApp()).get('/page1')
     assert_equal(

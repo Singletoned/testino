@@ -1090,10 +1090,10 @@ class TestAgent(object):
         return self.one(path).click(follow=follow)
 
     def _click(self, element, follow=False):
-        return self.get(
-            element.attrib['href'],
-            follow=follow
-        )
+        href = element.attrib['href']
+        if '#' in href:
+            href = href.split('#')[0]
+        return self.get(href, follow=follow)
 
     def follow(self):
         """
