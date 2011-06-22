@@ -5,7 +5,7 @@ from cStringIO import StringIO
 from urlparse import urlparse, urlunparse, urljoin
 from Cookie import BaseCookie
 from functools import wraps
-from itertools import chain
+from itertools import chain, groupby
 from shutil import copyfileobj
 import re
 
@@ -268,7 +268,66 @@ class ElementWrapper(object):
         """
         Return the value of the selected checkbox attribute (defaults to ``On``)
         """
-        return self.element.attrib.get('value', 'On')
+        value = [
+            item.attrib.get('value', 'On')
+            for item in
+            self.element.xpath(
+                "./ancestor-or-self::form[1]//input[@type='checkbox' and @name=$name and @checked]",
+                name=self.element.attrib.get('name', '')
+            )
+        ]
+        return value
+
+    @when("input[@type='checkbox']")
+    def _set_value(self, values):
+        """
+        Check the checkboxes corresponding to the given list of values
+        """
+        found = set()
+        values = set(values)
+        elements = self.element.xpath(
+            "./ancestor-or-self::form[1]//input[@type='checkbox' and @name=$name]",
+            name=self.element.attrib.get('name', ''))
+        for el in elements:
+            if (el.attrib['value'] in values):
+                el.attrib['checked'] = ""
+                found.add(el.attrib['value'])
+            elif 'checked' in el.attrib:
+                del el.attrib['checked']
+        if found != values:
+            raise AssertionError("Values %r not present in checkbox group %r" % (values - found, self.element.attrib.get('name')))
+
+    @when("input[@type='radio']")
+    def _get_value(self):
+        """
+        Return the value of the selected radio button
+        """
+        selected = self.element.xpath(
+            "./ancestor-or-self::form[1]//input[@type='radio' and @name=$name and @checked]",
+            name=self.element.attrib.get('name', '')
+        )
+        if len(selected):
+            return selected[0].attrib['value']
+        return None
+
+    @when("input[@type='radio']")
+    def _set_value(self, value):
+        """
+        Set the value of the radio button, by searching for the radio
+        button in the group with the given value and checking it.
+        """
+        found = False
+        elements = self.element.xpath(
+            "./ancestor-or-self::form[1]//input[@type='radio' and @name=$name]",
+            name=self.element.attrib.get('name', ''))
+        for el in elements:
+            if (el.attrib['value'] == value):
+                el.attrib['checked'] = ""
+                found = True
+            elif 'checked' in el.attrib:
+                del el.attrib['checked']
+        if value is not None and not found:
+            raise AssertionError("Value %r not present in radio button group %r" % (value, self.element.attrib.get('name')))
 
     @when("input[@type='file']")
     def _set_value(self, value):
@@ -388,16 +447,28 @@ class ElementWrapper(object):
 
     value = property(_get_value, _set_value)
 
-    @when("input[@type='radio' or @type='checkbox']")
+    @when("input[@type='checkbox']")
     def submit_value(self):
         """
-        Return the value of the selected radio/checkbox element as the user
+        Return the value of the selected checkbox element as the user
         agent would return it to the server in a form submission.
         """
         if 'disabled' in self.element.attrib:
             return None
         if 'checked' in self.element.attrib:
-            return self.value
+            return self.element.attrib.get('value', 'On')
+        return None
+
+    @when("input[@type='radio']")
+    def submit_value(self):
+        """
+        Return the value of the selected radio element as the user
+        agent would return it to the server in a form submission.
+        """
+        if 'disabled' in self.element.attrib:
+            return None
+        if 'checked' in self.element.attrib:
+            return self.element.attrib.get('value', '')
         return None
 
     @when("input[not(@type) or @type != 'submit' and @type != 'image' and @type != 'reset']|select|textarea")
@@ -520,40 +591,30 @@ class ElementWrapper(object):
             return self.one(".//*[@name='%s']" % (key,)).value
         except MultipleMatchesError:
             elements = self.all(".//*[@name='%s']" % key)
-            checkboxes = [
-                element for element in elements
-                if element.element.get('type', '')=="checkbox"]
-            if len(elements) != len(checkboxes):
-                raise MultipleMatchesError(xpath.encode('utf8'), elements)
+            values = [k for k,v in groupby(sorted(el.value for el in elements))]
+            if len(values) == 1:
+                return values.pop()
             else:
-                return [cb.value for cb in checkboxes if cb.checked]
+                raise
 
     @when("form")
     def __setitem__(self, key, value):
         """
-        Sets the value of the element that has the same name as the given key.  It is an error if there is more than one matching element.
+        Sets the value of the element that has the same name as the given key.  It is an error if there is more than one matching element, unless they are all checkboxes or radios, or the length of value is equal to the number of elements.
         """
         xpath = ".//*[@name='%s']" % key
-        if not isinstance(value, (tuple, list)):
+        try:
             self.one(xpath).value = value
-        else:
+        except MultipleMatchesError:
             elements = self.all(".//*[@name='%s']" % key)
-            checkboxes = [
-                element for element in elements
-                if element.element.get('type', '')=="checkbox"]
-            value = set(value)
-            checked_values = set()
-            if len(checkboxes) == len(elements):
-                for element in elements:
-                    if element.element.get('value') in value:
-                        element.checked = True
-                        checked_values.add(element.element.get('value'))
-                    else:
-                        element.checked = False
-                if value>checked_values:
-                    raise ValueError("Values %s not in element" % list(value-checked_values))
+            element_types = set([el.element.get('type') for el in elements])
+            if len(element_types) == 1 and element_types < set(['checkbox', 'radio']):
+                elements[0].value = value
+            elif len(value) == len(elements):
+                for e, v in zip(elements, value):
+                    e.value = v
             else:
-                raise MultipleMatchesError(xpath.encode('utf8'), elements)
+                raise
 
     @when("form")
     def submit(self, button=None, follow=False):
@@ -618,26 +679,13 @@ class ElementWrapper(object):
         **data
             Dictionary of (fieldname => value) mappings. Values may be lists,
             in which case multiple fields of the same name will be assigned
-            values. 
+            values.
 
         """
-
-        data = data.items()
-        data = ((key, value if isinstance(value, list) else [value]) for key, value in data)
-        data = (
-            (
-                """
-                    .//*[
-                        (local-name() = 'input' or local-name() = 'textarea' or local-name() = 'select')
-                        and (@name='{fieldname}' or @id='{fieldname}')
-                    ][{index}]
-                """.format(fieldname=fieldname, index=ix+1),
-                item
-            ) for fieldname, values in data for ix, item in enumerate(values)
-        )
-
-        for path, value in chain(data, pairs):
-            self[path].value = value
+        for path, value in pairs:
+            self.one(path).value = value
+        for key, value in data.items():
+            self[key] = value
         return self
 
     def html(self, encoding=unicode):

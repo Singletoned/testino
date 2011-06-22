@@ -523,10 +523,76 @@ def test_form_setitem():
     form_page = TestAgent(TestApp()).get('/form-checkbox')
     form = form_page.one('//form')
     assert_raises(
-        ValueError,
+        AssertionError,
         form.__setitem__,
         'a',
         ['1', '2', '3'])
+
+def test_form_checkbox_value_property():
+    form = TestAgent(FormApp("""
+        <input name="a" value="1" type="checkbox"/>
+        <input name="a" value="2" type="checkbox"/>
+    """)).get('/').form
+
+    form.one('//input[@name="a"][1]').checked = True
+    form.one('//input[@name="a"][2]').checked = True
+    assert form.one('//input[@name="a"][1]').value == ['1', '2']
+    assert form.one('//input[@name="a"][2]').value == ['1', '2']
+    assert form['a'] == ['1', '2']
+
+    form.one('//input[@name="a"][1]').checked = False
+    form.one('//input[@name="a"][2]').checked = True
+    assert form.one('//input[@name="a"][1]').value == ['2']
+    assert form.one('//input[@name="a"][2]').value == ['2']
+    assert form['a'] == ['2']
+
+    form.one('//input[@name="a"][1]').checked = False
+    form.one('//input[@name="a"][2]').checked = False
+    assert form.one('//input[@name="a"][1]').value == []
+    assert form.one('//input[@name="a"][2]').value == []
+    assert form['a'] == []
+
+    form.one('//input[@name="a"][1]').value = ['1', '2']
+    assert form.one('//input[@name="a"][1]').checked == True
+    assert form.one('//input[@name="a"][2]').checked == True
+    assert form['a'] == ['1', '2']
+
+    form.one('//input[@name="a"][1]').value = ['1']
+    assert form.one('//input[@name="a"][1]').checked == True
+    assert form.one('//input[@name="a"][2]').checked == False
+    assert form['a'] == ['1']
+
+    form.one('//input[@name="a"][1]').value = []
+    assert form.one('//input[@name="a"][1]').checked == False
+    assert form.one('//input[@name="a"][2]').checked == False
+    assert form['a'] == []
+
+
+def test_form_radio_value_property():
+    form = TestAgent(FormApp("""
+        <input name="a" value="1" type="radio"/>
+        <input name="a" value="2" type="radio"/>
+    """)).get('/').form
+
+    assert form['a'] == None
+    form.one('//input[@name="a"][2]').checked = True
+    assert form['a'] == '2'
+    assert form.one('//input[@name="a"][1]').value == '2'
+    assert form.one('//input[@name="a"][2]').value == '2'
+
+    form['a'] = '1'
+    assert form.one('//input[@name="a"][1]').checked == True
+    assert form.one('//input[@name="a"][2]').checked == False
+    assert form.one('//input[@name="a"][1]').value == '1'
+    assert form.one('//input[@name="a"][2]').value == '1'
+
+    form['a'] = '2'
+    assert form.one('//input[@name="a"][1]').checked == False
+    assert form.one('//input[@name="a"][2]').checked == True
+
+    form['a'] = None
+    assert form.one('//input[@name="a"][1]').checked == False
+    assert form.one('//input[@name="a"][2]').checked == False
 
 def test_form_textarea():
     form_page = TestAgent(FormApp('<textarea name="t"></textarea>')).get('/')
@@ -883,13 +949,13 @@ def test_form_fill_with_single_values():
             <textarea name="q"/>
             <input name="r" type="text"/>
     ''')).get('/')
-    form_page['//form'].fill(
+    form_page.form.fill(
         p = 'plum',
         q = 'quince',
         r = 'raspberry',
     )
     assert_equal(
-        form_page['//form'].form.submit_data(),
+        form_page.form.submit_data(),
         [('p', 'plum'), ('q', 'quince'), ('r', 'raspberry')]
     )
 
@@ -899,13 +965,13 @@ def test_form_fill_with_xpath_expressions():
             <textarea name="q" type="text"/>
             <input name="r" type="text"/>
     ''')).get('/')
-    form_page['//form'].fill(
+    form_page.form.fill(
         ('input[1]', 'plum'),
         ('textarea', 'quince'),
         ('input[2]', 'raspberry'),
     )
     assert_equal(
-        form_page['//form'].form.submit_data(),
+        form_page.form.submit_data(),
         [('p', 'plum'), ('q', 'quince'), ('r', 'raspberry')]
     )
 
@@ -917,10 +983,10 @@ def test_form_fill_with_multiple_values():
             <input name="r" type="text" value='R' />
             <input name="p" type="text"/>
     ''')).get('/')
-    form_page['//form'].fill(
+    form_page.form.fill(
         p = ['a', 'b', 'c']
     )
     assert_equal(
-        form_page['//form'].form.submit_data(),
+        form_page.form.submit_data(),
         [('p', 'a'), ('q', 'Q'), ('p', 'b'), ('r', 'R'), ('p', 'c')]
     )
