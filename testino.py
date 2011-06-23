@@ -644,6 +644,41 @@ class ElementWrapper(object):
         }[(method, self.element.attrib.get('enctype'))](path, data, follow=follow)
 
     @when("form")
+    def data_set(self, button=None):
+        """
+        Return the form's data set, as close to the html5 spec as reasonable.
+        """
+        def is_a_button(element):
+            if element.tag == "button":
+                return True
+            elif element.tag == "input":
+                if element.attrib.get('type', None) in ['submit', 'reset']:
+                    return True
+
+        def filter_unclicked_buttons(clicked_button, elements):
+            response = []
+            button_found = False
+            for element in elements:
+                if not is_a_button(element):
+                    response.append(element)
+                    continue
+                elif not button_found:
+                    if element.tag == clicked_button.tag:
+                        if element.attrib == clicked_button.attrib:
+                            response.append(element)
+                            button_found = True
+            return response
+
+        data = []
+        elements = self.all(
+            ".//button|.//input|.//keygen|.//object|.//select|.//textarea")
+        elements = [el.element for el in elements]
+        elements = [el for el in elements if not 'disabled' in el.attrib]
+        elements = filter_unclicked_buttons(button, elements)
+        data = [(e.name, e.value) for e in elements]
+        return data
+
+    @when("form")
     def submit_data(self, button=None):
         """
         Return a list of the data that would be submitted to the server

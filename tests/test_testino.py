@@ -867,6 +867,31 @@ def test_form_submit_button():
     else:
         raise AssertionError("Shouldn't be able to call submit_data on a non-submit button")
 
+def test_form_data_set():
+    html_form = '''
+    <html><body>
+      <form method="POST" id="flibble" action="/flibble">
+        <input type="text" name="foo" value="">
+          <input type="text" name="bar" value="">
+          <input type="text" name="baz" value="" disabled>
+          <input type="submit" name="submit" value="Draft">
+          <input type="submit" name="submit" value="Draft">
+          <input type="submit" name="submit" value="Save">
+          <input type="submit" name="submit" value="Save">
+      </form>
+    </body></html>'''
+    page = TestAgent(wz.Response(html_form)).get('/')
+    form = page.form
+    baz = form.one("input[@name='baz']")
+    form['foo'] = "foo_value"
+    form['bar'] = "bar_value"
+    draft_button = form.one('input[@value="Draft"][1]')
+    data = form.data_set(button=draft_button)
+    assert data == [
+        ('foo', "foo_value"),
+        ('bar', "bar_value"),
+        ('submit', "Draft")]
+
 def test_form_action_fully_qualified_uri_doesnt_error():
     app = FormApp("", action='http://localhost/')
     r = TestAgent(app).get('/')
