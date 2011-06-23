@@ -872,12 +872,20 @@ def test_form_data_set():
     <html><body>
       <form method="POST" id="flibble" action="/flibble">
         <input type="text" name="foo" value="">
-          <input type="text" name="bar" value="">
-          <input type="text" name="baz" value="" disabled>
-          <input type="submit" name="submit" value="Draft">
-          <input type="submit" name="submit" value="Draft">
-          <input type="submit" name="submit" value="Save">
-          <input type="submit" name="submit" value="Save">
+        <input type="text" name="bar" value="">
+        <input type="text" name="baz" value="" disabled>
+        <select name="wordchoice">
+          <option value="blamble" selected="selected">Blamble!</option>
+          <option value="bloozle">Bloozle!!</option>
+          <option value="plop">Plop!!!</option>
+        </select>
+        <input type="submit" name="submit" value="Draft">
+        <input type="submit" name="submit" value="Draft">
+        <input type="reset" name="reset" value="Reset">
+        <input type="reset" name="reset" value="Reset">
+        <input type="submit" name="submit" value="Save">
+        <input type="submit" name="submit" value="Save">
+        <button name="empty" value="empty">
       </form>
     </body></html>'''
     page = TestAgent(wz.Response(html_form)).get('/')
@@ -890,6 +898,7 @@ def test_form_data_set():
     assert data == [
         ('foo', "foo_value"),
         ('bar', "bar_value"),
+        ('wordchoice', "blamble"),
         ('submit', "Draft")]
 
 def test_form_action_fully_qualified_uri_doesnt_error():
