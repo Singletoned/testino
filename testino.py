@@ -150,6 +150,23 @@ def when(xpath_expr):
         return wrapped
     return when
 
+xpath_funcs = dict()
+
+def xpath_func(xpath):
+    def _xpath_func(func):
+        xpath_funcs.setdefault(func.__name__, {})[xpath] = func
+        return func
+    return _xpath_func
+
+class _ElementWrapper(object):
+    def __init__(self, xpath):
+        self.xpath = xpath
+
+    def __getattr__(self, attr):
+        func_dict = xpath_funcs[attr]
+        for xpath, func in func_dict.items():
+            if xpath in self.xpath:
+                return functools.partial(func, self)
 
 def _path_from_kwargs(tag, **kwargs):
     text_arg = kwargs.pop('text', '')
