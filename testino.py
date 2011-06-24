@@ -58,6 +58,13 @@ class BadResponse(Exception):
         return "The status %s did not match %s" % (
             self.response_status, self.expected_status)
 
+def browserify(tree):
+    """Fix up a html tree to be more like what the browser actually deals with"""
+    # Select first options of unselected, non-multiple selects
+    options = tree.xpath("//select[not(@multiple) and not(@display>1) and not(option[@selected])]/option[1]")
+    for option in options:
+        option.attrib['selected'] = 'selected'
+    return tree
 
 def striptags_from_node(node, convert_breaks=False):
     if convert_breaks:
@@ -1077,7 +1084,9 @@ class TestAgent(object):
             raise NoRequestMadeError
         for element in self._elements:
             element.reset()
-        self._lxml = lxml.html.fromstring(self.response.data.decode('utf-8'))
+        self._lxml = browserify(
+            lxml.html.fromstring(
+                self.response.data.decode('utf-8')))
 
     def _find(self, path, namespaces=None, css=False, **kwargs):
         """

@@ -526,6 +526,22 @@ def test_form_text():
         "a:<do>; a:<re>; b:<mi>"
     )
 
+def test_select_default_option():
+    body = """
+    <form method="" id="" action="">
+      <select name="words">
+        <option value="floozle">Floozle</option>
+        <option value="flamble">Flamble</option>
+        <option value="blat">Blat</option>
+        <option value="blop">Blop</option>
+      </select>
+    </form>
+    """
+    page = TestAgent(wz.Response(body)).get(u'/')
+    form = page.form
+    assert form['words'] == "floozle"
+    assert form.one("//option[@value=$value]", value="floozle").selected
+
 def test_form_checkbox():
     form_page = TestAgent(TestApp()).get('/form-checkbox')
     form = form_page.one('//form')
