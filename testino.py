@@ -9,7 +9,11 @@ import itertools
 from shutil import copyfileobj
 import re
 
+import html5lib
+
 import lxml.html
+# import lxml.html.html5parser
+
 from lxml.cssselect import CSSSelector
 from lxml.etree import XPath
 
@@ -1077,7 +1081,15 @@ class TestAgent(object):
             raise NoRequestMadeError
         for element in self._elements:
             element.reset()
-        self._lxml = lxml.html.fromstring(self.response.data.decode('utf-8'))
+        # self._lxml = lxml.html.document_fromstring(self.response.data.decode('utf-8'))
+        # import html5lib
+        # from html5lib import treebuilders
+        # from lxml.html import etree
+
+        # f = open("mydocument.html")
+        parser = html5lib.HTMLParser(tree=html5lib.treebuilders.getTreeBuilder("lxml"), namespaceHTMLElements=False, strict=True)
+        self._lxml = parser.parse(self.response.data.decode('utf-8'))
+        # self._lxml = html5lib.parse(self.response.data.decode('utf-8'), treebuilder="lxml", namespaceHTMLElements=False, strict=True)
 
     def _find(self, path, namespaces=None, css=False, **kwargs):
         """

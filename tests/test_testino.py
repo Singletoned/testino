@@ -355,7 +355,9 @@ def test_rows_to_dict():
     """
     for body in [body_1, body_2]:
         agent = TestAgent(wz.Response(body)).get('/')
+        print agent.pretty()
         row = agent.one(u'//tr[td][1]')
+        print row.pretty()
         assert row.headers() == ["foo", "bar", "baz"]
         expected = dict(foo='1', bar='2', baz='3')
         for key in expected:
