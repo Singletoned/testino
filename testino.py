@@ -274,15 +274,7 @@ class ElementWrapper(object):
         """
         Return the value of the selected checkbox attribute (defaults to ``On``)
         """
-        value = [
-            item.attrib.get('value', 'On')
-            for item in
-            self.element.xpath(
-                "./ancestor-or-self::form[1]//input[@type='checkbox' and @name=$name and @checked]",
-                name=self.element.attrib.get('name', '')
-            )
-        ]
-        return value
+        return self.checked and self.element.value or None
 
     @when("input[@type='checkbox']")
     def _set_value(self, values):
@@ -378,7 +370,7 @@ class ElementWrapper(object):
         """
         Return the value of the textarea
         """
-        return self.element.text
+        return self.element.text or ''
 
     @when("textarea")
     def _set_value(self, value):
@@ -438,6 +430,15 @@ class ElementWrapper(object):
         if not found:
             raise AssertionError("Value %r not present in select %r" % (value, self.element.attrib.get('name')))
 
+    @when("option")
+    def _get_value(self):
+        """
+        Get the value of an option
+        """
+        return self.attrib.get('value', None)
+
+    value = property(_get_value, _set_value)
+
     @when("select")
     def select(self, text):
         """Set the value of the select to be the value with the given text.
@@ -453,8 +454,6 @@ class ElementWrapper(object):
             self.element is other.element
             and self.agent is other.agent
         )
-
-    value = property(_get_value, _set_value)
 
     @when("input[@type='checkbox']")
     def submit_value(self):
@@ -607,11 +606,21 @@ class ElementWrapper(object):
             return self.one(".//*[@name='%s']" % (key,)).value
         except MultipleMatchesError:
             elements = self.all(".//*[@name='%s']" % key)
-            values = [k for k,v in itertools.groupby(sorted(el.value for el in elements))]
-            if len(values) == 1:
-                return values.pop()
+            element_types = set([el.element.get('type') for el in elements])
+            if len(element_types) == 1:
+                element_type = list(element_types)[0]
+                if element_type == 'checkbox':
+                    value = [el.value for el in elements if 'checked' in el.attrib]
+                elif element_type == 'radio':
+                    for el in elements:
+                        if 'checked' in el.attrib:
+                            return el.value
+                    return None
+                else:
+                    raise
             else:
                 raise
+            return value
 
     @when("form")
     def __setitem__(self, key, value):
@@ -659,7 +668,7 @@ class ElementWrapper(object):
             if element.tag == "button":
                 return True
             elif element.tag == "input":
-                if element.attrib.get('type', None) in ['submit', 'reset']:
+                if element.attrib.get('type', None) in ['submit', 'reset', 'image']:
                     return True
 
         def filter_unclicked_buttons(clicked_button, elements):
@@ -670,20 +679,48 @@ class ElementWrapper(object):
                     response.append(element)
                     continue
                 elif not button_found:
-                    if element.tag == clicked_button.tag:
-                        if element.attrib == clicked_button.attrib:
-                            response.append(element)
-                            button_found = True
+                    if clicked_button:
+                        if element.tag == clicked_button.tag:
+                            if element.attrib == clicked_button.attrib:
+                                response.append(element)
+                                button_found = True
             return response
+
+        def filter_unchecked_radios_and_checkboxes(elements):
+            for element in elements:
+                if element.tag == 'input':
+                    if element.attrib.get('type', '') in ['radio', 'checkbox']:
+                        if not 'checked' in element.attrib:
+                            continue
+                yield element
+
+        def make_data(elements):
+            for element in elements:
+                if element.tag == 'select':
+                    if 'multiple' in element.attrib:
+                        for option in element.all(".//option[@selected]"):
+                            yield (element.name, option.value)
+                    else:
+                        option = element.one(".//option[@selected]")
+                        yield (element.name, option.value)
+                elif element.attrib.get('type', None) == 'image':
+                    if element.attrib.has_key('name'):
+                        element_name = element.attrib['name'] + "."
+                    else:
+                        element_name = ''
+                    yield (element_name+'x', '1')
+                    yield (element_name+'y', '1')
+                else:
+                    yield (element.attrib['name'], element.value)
 
         data = []
         elements = self.all(
             ".//button|.//input|.//keygen|.//object|.//select|.//textarea")
-        elements = [el.element for el in elements]
         elements = [el for el in elements if not 'disabled' in el.attrib]
         elements = filter_unclicked_buttons(button, elements)
-        data = [(e.name, e.value) for e in elements]
-        return data
+        elements = filter_unchecked_radios_and_checkboxes(elements)
+        data = make_data(elements)
+        return list(data)
 
     @when("form")
     def submit_data(self, button=None):
@@ -691,33 +728,7 @@ class ElementWrapper(object):
         Return a list of the data that would be submitted to the server
         in the format ``[(key, value), ...]``, without actually submitting the form.
         """
-        data = []
-
-        if button and 'name' in button.attrib:
-            data.append((button.attrib['name'], button.value))
-            if button.element.attrib.get('type') == 'image':
-                data.append((button.attrib['name'] + '.x', '1'))
-                data.append((button.attrib['name'] + '.y', '1'))
-
-        for input in (ElementWrapper(self.agent, el) for el in self.element.xpath('.//input|.//textarea|.//select')):
-            try:
-                name = input.attrib['name']
-            except KeyError:
-                continue
-            value = input.submit_value
-            if value is None:
-                continue
-
-            elif input.attrib.get('type') == 'file' and isinstance(value, tuple):
-                data.append((name, value))
-
-            elif isinstance(value, basestring):
-                data.append((name, value))
-
-            else:
-                data += [(name, v) for v in value]
-
-        return data
+        return self.data_set(button=button)
 
     @when("form")
     def fill(self, *pairs, **data):

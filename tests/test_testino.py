@@ -618,20 +618,20 @@ def test_form_checkbox_value_property():
 
     form.one('//input[@name="a"][1]').checked = True
     form.one('//input[@name="a"][2]').checked = True
-    assert form.one('//input[@name="a"][1]').value == ['1', '2']
-    assert form.one('//input[@name="a"][2]').value == ['1', '2']
+    assert form.one('//input[@name="a"][1]').value == '1'
+    assert form.one('//input[@name="a"][2]').value == '2'
     assert form['a'] == ['1', '2']
 
     form.one('//input[@name="a"][1]').checked = False
     form.one('//input[@name="a"][2]').checked = True
-    assert form.one('//input[@name="a"][1]').value == ['2']
-    assert form.one('//input[@name="a"][2]').value == ['2']
+    assert form.one('//input[@name="a"][1]').value == None
+    assert form.one('//input[@name="a"][2]').value == '2'
     assert form['a'] == ['2']
 
     form.one('//input[@name="a"][1]').checked = False
     form.one('//input[@name="a"][2]').checked = False
-    assert form.one('//input[@name="a"][1]').value == []
-    assert form.one('//input[@name="a"][2]').value == []
+    assert form.one('//input[@name="a"][1]').value == None
+    assert form.one('//input[@name="a"][2]').value == None
     assert form['a'] == []
 
     form.one('//input[@name="a"][1]').value = ['1', '2']
@@ -863,8 +863,8 @@ def test_form_submit_button():
     assert_equal(form_page.one('#2', css=True).submit_data(), [('s', '2')])
     assert_equal(form_page.one('#3', css=True).submit().body, 't:<3>')
     assert_equal(form_page.one('#3', css=True).submit_data(), [('t', '3')])
-    assert_equal(form_page.one('#4', css=True).submit().body, 'u:<4>; u.x:<1>; u.y:<1>')
-    assert_equal(form_page.one('#4', css=True).submit_data(), [('u', '4'), ('u.x', '1'), ('u.y', '1')])
+    assert_equal(form_page.one('#4', css=True).submit().body, 'u.x:<1>; u.y:<1>')
+    assert form_page.one('#4', css=True).submit_data() == [('u.x', '1'), ('u.y', '1')]
     assert_equal(form_page.one('#5', css=True).submit().body, 'v:<5>')
     assert_equal(form_page.one('#5', css=True).submit_data(), [('v', '5')])
     assert_equal(form_page.one('#6', css=True).submit().body, 'w:<6>')
@@ -891,9 +891,15 @@ def test_form_data_set():
         <input type="text" name="bar" value="">
         <input type="text" name="baz" value="" disabled>
         <select name="wordchoice">
-          <option value="blamble" selected="selected">Blamble!</option>
+          <option value="blamble">Blamble!</option>
           <option value="bloozle">Bloozle!!</option>
           <option value="plop">Plop!!!</option>
+        </select>
+        <select name="colours" multiple>
+          <option value="puce">Puce</option>
+          <option value="maroon">Maroon</option>
+          <option value="beige">Beige</option>
+          <option value="eggshell">eggshell</option>
         </select>
         <input type="submit" name="submit" value="Draft">
         <input type="submit" name="submit" value="Draft">
@@ -909,12 +915,15 @@ def test_form_data_set():
     baz = form.one("input[@name='baz']")
     form['foo'] = "foo_value"
     form['bar'] = "bar_value"
+    form['colours'] = ['puce', 'beige']
     draft_button = form.one('input[@value="Draft"][1]')
     data = form.data_set(button=draft_button)
     assert data == [
         ('foo', "foo_value"),
         ('bar', "bar_value"),
         ('wordchoice', "blamble"),
+        ('colours', 'puce'),
+        ('colours', 'beige'),
         ('submit', "Draft")]
 
 def test_form_action_fully_qualified_uri_doesnt_error():
