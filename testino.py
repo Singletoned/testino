@@ -736,6 +736,11 @@ class ElementWrapper(object):
         Return a list of the data that would be submitted to the server
         in the format ``[(key, value), ...]``, without actually submitting the form.
         """
+        if not button:
+            try:
+                button = self.one(".//input[@type='submit']")
+            except (NoMatchesError, MultipleMatchesError):
+                pass
         return self.data_set(button=button)
 
     @when("form")
