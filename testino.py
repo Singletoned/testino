@@ -588,6 +588,13 @@ class ElementWrapper(object):
         """
         return self.submit(follow)
 
+    @when("form")
+    def button(self, **kwargs):
+        path = "%s|%s" % (
+            _path_from_kwargs("input", **kwargs),
+            _path_from_kwargs("button", **kwargs))
+        return self.one(path)
+
     @when("input[@type='submit' or @type='image']|button[@type='submit' or not(@type)]")
     def submit_data(self):
         """

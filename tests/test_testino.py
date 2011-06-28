@@ -948,6 +948,22 @@ def test_form_submit_selects_a_default_button():
     form = page.form
     assert form.submit_data() == [("foo", ""), ("submit", "Save")]
 
+def test_form_button():
+    html_form = '''
+    <html><body>
+      <form method="POST" id="flibble" action="/flibble">
+        <input type="text" name="foo" value="">
+        <input type="submit" name="submit" value="Save">
+      </form>
+    </body></html>'''
+    page = TestAgent(wz.Response(html_form)).get('/')
+    form = page.form
+    assert form.button(value="Save")
+    assert_raises(
+        testino.NoMatchesError,
+        form.button,
+        value="Flibble")
+
 def test_form_action_fully_qualified_uri_doesnt_error():
     app = FormApp("", action='http://localhost/')
     r = TestAgent(app).get('/')
