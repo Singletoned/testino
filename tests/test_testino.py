@@ -927,6 +927,7 @@ def test_form_data_set():
         ('colours', 'puce'),
         ('colours', 'beige'),
         ('submit', "Draft")]
+    assert data == draft_button.submit_data()
     data = form.data_set()
     assert data == [
         ('foo', "foo_value"),
