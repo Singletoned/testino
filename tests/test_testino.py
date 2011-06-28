@@ -890,6 +890,7 @@ def test_form_data_set():
         <input type="text" name="foo" value="">
         <input type="text" name="bar" value="">
         <input type="text" name="baz" value="" disabled>
+        <input type="text" value="flibble">
         <select name="wordchoice">
           <option value="blamble">Blamble!</option>
           <option value="bloozle">Bloozle!!</option>
@@ -907,6 +908,7 @@ def test_form_data_set():
         <input type="reset" name="reset" value="Reset">
         <input type="submit" name="submit" value="Save">
         <input type="submit" name="submit" value="Save">
+        <input type="submit" value="Save">
         <button name="empty" value="empty">
       </form>
     </body></html>'''
@@ -925,6 +927,13 @@ def test_form_data_set():
         ('colours', 'puce'),
         ('colours', 'beige'),
         ('submit', "Draft")]
+    data = form.data_set()
+    assert data == [
+        ('foo', "foo_value"),
+        ('bar', "bar_value"),
+        ('wordchoice', "blamble"),
+        ('colours', 'puce'),
+        ('colours', 'beige')]
 
 def test_form_action_fully_qualified_uri_doesnt_error():
     app = FormApp("", action='http://localhost/')

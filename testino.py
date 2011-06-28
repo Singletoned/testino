@@ -671,6 +671,13 @@ class ElementWrapper(object):
                 if element.attrib.get('type', None) in ['submit', 'reset', 'image']:
                     return True
 
+        def filter_unnamed_buttons(elements):
+            for element in elements:
+                if element.attrib.get('name', False):
+                    yield element
+                elif element.attrib.get('type', None) == 'image':
+                    yield element
+
         def filter_unclicked_buttons(clicked_button, elements):
             response = []
             button_found = False
@@ -717,6 +724,7 @@ class ElementWrapper(object):
         elements = self.all(
             ".//button|.//input|.//keygen|.//object|.//select|.//textarea")
         elements = [el for el in elements if not 'disabled' in el.attrib]
+        elements = filter_unnamed_buttons(elements)
         elements = filter_unclicked_buttons(button, elements)
         elements = filter_unchecked_radios_and_checkboxes(elements)
         data = make_data(elements)
