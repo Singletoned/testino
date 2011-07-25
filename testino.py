@@ -33,11 +33,15 @@ class MultipleMatchesError(Exception):
         return "%s returns multiple elements, %s" % (self.path, self.elements)
 
 class NoMatchesError(Exception):
-    def __init__(self, path):
+    def __init__(self, path, params=None):
         self.path = path
+        self.params = params
 
     def __str__(self):
-        return "%s returns no elements" % (self.path,)
+        if self.params:
+            return "%s, %s returns no elements" % (self.path, self.params)
+        else:
+            return "%s returns no elements" % (self.path)
 
 class NoRequestMadeError(Exception):
     pass
@@ -198,7 +202,7 @@ class ElementWrapper(object):
         """
         elements = self.element.xpath(xpath, **kwargs)
         if len(elements) == 0:
-            raise NoMatchesError(xpath.encode('utf8'))
+            raise NoMatchesError(xpath.encode('utf8'), kwargs)
         elif len(elements) > 1:
             raise MultipleMatchesError(xpath.encode('utf8'), elements)
         else:
@@ -1146,7 +1150,7 @@ class TestAgent(object):
         """
         elements = self.all(path, css=css, **kwargs)
         if len(elements) > 1:
-            raise MultipleMatchesError(path.encode('utf8'), elements)
+            raise MultipleMatchesError(path.encode('utf8'), elements, kwargs)
         elif len(elements) == 0:
             raise NoMatchesError(path.encode('utf8'))
         else:

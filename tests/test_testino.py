@@ -212,6 +212,17 @@ class TestApp(object):
                 '; '.join("%s:<%s>" % (name, value) for (name, value) in sorted(request.cookies.items()))
         ])
 
+def test_no_matches_error():
+    error = testino.NoMatchesError("//foo")
+    assert_equal(
+        str(error),
+        "//foo returns no elements")
+
+    error = testino.NoMatchesError("//foo[@class=$_class]", dict(_class="bar"))
+    assert_equal(
+        str(error),
+        "//foo[@class=$_class], {'_class': 'bar'} returns no elements")
+
 def test_all():
     page = TestAgent(TestApp()).get('/form-checkbox')
     for name in ['a', 'b']:
