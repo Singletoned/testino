@@ -25,12 +25,16 @@ xpath_registry = {}
 REGEXP_NAMESPACE = "http://exslt.org/regular-expressions"
 
 class MultipleMatchesError(Exception):
-    def __init__(self, path, elements):
+    def __init__(self, path, elements, params=None):
         self.path = path
         self.elements = elements
+        self.params = params
 
     def __str__(self):
-        return "%s returns multiple elements, %s" % (self.path, self.elements)
+        if self.params:
+            return "%s, %s returns multiple elements: %s" % (self.path, self.params, self.elements)
+        else:
+            return "%s returns multiple elements: %s" % (self.path, self.elements)
 
 class NoMatchesError(Exception):
     def __init__(self, path, params=None):
@@ -204,7 +208,7 @@ class ElementWrapper(object):
         if len(elements) == 0:
             raise NoMatchesError(xpath.encode('utf8'), kwargs)
         elif len(elements) > 1:
-            raise MultipleMatchesError(xpath.encode('utf8'), elements)
+            raise MultipleMatchesError(xpath.encode('utf8'), elements, kwargs)
         else:
             return self.__class__(self.agent, elements[0])
 
@@ -1152,7 +1156,7 @@ class TestAgent(object):
         if len(elements) > 1:
             raise MultipleMatchesError(path.encode('utf8'), elements, kwargs)
         elif len(elements) == 0:
-            raise NoMatchesError(path.encode('utf8'))
+            raise NoMatchesError(path.encode('utf8'), kwargs)
         else:
             return elements[0]
 

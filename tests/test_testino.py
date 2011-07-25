@@ -223,6 +223,18 @@ def test_no_matches_error():
         str(error),
         "//foo[@class=$_class], {'_class': 'bar'} returns no elements")
 
+def test_multiple_matches_error():
+    error = testino.MultipleMatchesError("//foo", ['badda', 'bing'])
+    assert_equal(
+        str(error),
+        "//foo returns multiple elements: ['badda', 'bing']")
+
+    error = testino.MultipleMatchesError(
+        "//foo[@class=$_class]", ['badda', 'bing'], dict(_class="bar"))
+    assert_equal(
+        str(error),
+        "//foo[@class=$_class], {'_class': 'bar'} returns multiple elements: ['badda', 'bing']")
+
 def test_all():
     page = TestAgent(TestApp()).get('/form-checkbox')
     for name in ['a', 'b']:
