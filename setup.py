@@ -24,8 +24,8 @@ setup(
     include_package_data=True,
     zip_safe=False,
     install_requires=[
-        'lxml',
-        'werkzeug',
+        'lxml>=2.3',
+        'werkzeug>=0.7',
         # -*- Extra requirements: -*-
     ],
     entry_points="""
