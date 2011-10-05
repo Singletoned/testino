@@ -1,10 +1,12 @@
 from setuptools import setup, find_packages
 
+import __metadata__
+
 setup(
-    name='testino',
-    version='0.1',
-    description="Test WSGI applications using lxml",
-    # long_description=read('README'),
+    name=__metadata__.data['name'],
+    version=__metadata__.data['version'],
+    description=__metadata__.data['description'],
+    long_description=__metadata__.data['long_description'],
     classifiers=[
         'Development Status :: 4 - Beta',
         'Environment :: Web Environment',
