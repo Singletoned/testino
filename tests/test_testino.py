@@ -345,20 +345,22 @@ def test_rows_to_dict():
       <th>foo</th> <th>bar</th> <th>baz</th>
     </tr>
   </thead>
-  <tr>
-    <td>
-      1
-    </td>
-    <td>
-      2
-    </td>
-    <td>
-      3
-    </td>
-  </tr>
-  <tr>
-    <td>4</td> <td>5</td> <td>6</td>
-  </tr>
+  <tbody>
+    <tr>
+      <td>
+        1
+      </td>
+      <td>
+        2
+      </td>
+      <td>
+        3
+      </td>
+    </tr>
+    <tr>
+      <td>4</td> <td>5</td> <td>6</td>
+    </tr>
+  </tbody>
 </table>
     """
     body_2 = """
@@ -390,10 +392,11 @@ def test_tables():
         html.thead(
             html.tr(
                 *[html.th(html.span(i+" ")) for i in header_values])),
-        html.tr(
-            *[html.td(i) for i in [1, 2, 3]]),
-        html.tr(
-            *[html.td(i) for i in [4, 5, 6]]))
+        html.tbody(
+            html.tr(
+                *[html.td(i) for i in [1, 2, 3]]),
+            html.tr(
+                *[html.td(i) for i in [4, 5, 6]])))
     agent = TestAgent(wz.Response([table_text])).get(u'/')
     table = agent.one(u"//table")
     rows = [row.to_dict() for row in table.rows()]

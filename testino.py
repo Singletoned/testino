@@ -242,7 +242,7 @@ class ElementWrapper(object):
         """
         Return a list of the row headers
         """
-        headers = [el.text_content().strip() for el in self.all(u"../thead/tr/th")]
+        headers = [el.text_content().strip() for el in self.all(u"ancestor::table/thead/tr/th")]
         return headers
 
     @when("table")
@@ -250,7 +250,7 @@ class ElementWrapper(object):
         """
         Return a list of the rows in the table.
         """
-        return self.all(u"tr[td]")
+        return self.all(u"//tr[td]")
 
     @when("tr")
     def to_dict(self):
