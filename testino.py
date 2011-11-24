@@ -256,7 +256,7 @@ class ElementWrapper(object):
         """
         Return a list of the rows in the table.
         """
-        return self.all(u"//tr[td]")
+        return self.all(u".//tr[td]")
 
     @when("tr")
     def to_dict(self):

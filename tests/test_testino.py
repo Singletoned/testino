@@ -388,17 +388,27 @@ def test_rows_to_dict():
 
 def test_tables():
     header_values = ["foo", "bar", "baz"]
-    table_text = html.table(
-        html.thead(
-            html.tr(
-                *[html.th(html.span(i+" ")) for i in header_values])),
-        html.tbody(
-            html.tr(
-                *[html.td(i) for i in [1, 2, 3]]),
-            html.tr(
-                *[html.td(i) for i in [4, 5, 6]])))
+    table_text = html.div(
+        html.table(
+            html.thead(
+                html.tr(
+                    *[html.th(html.span(i+" ")) for i in header_values])),
+            html.tbody(
+                html.tr(
+                    *[html.td(i) for i in [1, 2, 3]]),
+                html.tr(
+                    *[html.td(i) for i in [4, 5, 6]]))),
+        html.table(
+            html.thead(
+                html.tr(
+                    *[html.th(html.span(i+" ")) for i in header_values])),
+            html.tbody(
+                html.tr(
+                    *[html.td(i) for i in [1, 2, 3]]),
+                html.tr(
+                    *[html.td(i) for i in [4, 5, 6]]))))
     agent = TestAgent(wz.Response([table_text])).get(u'/')
-    table = agent.one(u"//table")
+    table = agent.all(u"//table")[0]
     rows = [row.to_dict() for row in table.rows()]
     headers = table.headers()
     assert len(headers) == 3
