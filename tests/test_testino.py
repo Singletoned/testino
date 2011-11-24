@@ -1180,3 +1180,14 @@ def test_form_fill_with_multiple_values():
         form_page.form.submit_data(),
         [('p', 'a'), ('q', 'Q'), ('p', 'b'), ('r', 'R'), ('p', 'c')]
     )
+
+def test_has_class():
+    body = '''<p class="foo bar">Mr Flibble says Hello!</p>'''
+    agent = TestAgent(wz.Response(body))
+    page = agent.get('/')
+    p = page.one("//p")
+    assert p.has_class("foo")
+    assert p.has_class("bar")
+    assert not p.has_class("f")
+    assert not p.has_class("fo")
+    assert not p.has_class("Flibble")

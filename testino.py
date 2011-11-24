@@ -222,6 +222,12 @@ class ElementWrapper(object):
     def reset(self):
         self.element = lxml.html.fromstring(self._lxml)
 
+    def has_class(self, class_name):
+        """
+        Return whether element has the given string in it
+        """
+        return class_name in self.element.attrib['class'].split()
+
     @when("a[@href]")
     def click(self, follow=False):
         """
