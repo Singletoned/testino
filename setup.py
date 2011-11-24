@@ -23,7 +23,7 @@ data = dict(
     zip_safe=False,
     install_requires=[
         'lxml>=2.3',
-        'werkzeug>=0.7',
+        'werkzeug>=0.6',
         # -*- Extra requirements: -*-
     ],
     entry_points="""
