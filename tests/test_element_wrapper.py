@@ -7,7 +7,7 @@ def test_xpath_func():
     def bar(element):
         return "flibble"
 
-    assert t.xpath_funcs == dict(bar=dict(foo=bar))
+    assert t.xpath_funcs == dict(bar=[("foo", bar)])
 
 def test_element_wrapper_getattr():
     @t.xpath_func("foo")

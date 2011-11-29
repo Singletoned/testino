@@ -154,7 +154,7 @@ xpath_funcs = dict()
 
 def xpath_func(xpath):
     def _xpath_func(func):
-        xpath_funcs.setdefault(func.__name__, {})[xpath] = func
+        xpath_funcs.setdefault(func.__name__, []).append((xpath, func))
         return func
     return _xpath_func
 
@@ -163,8 +163,8 @@ class _ElementWrapper(object):
         self.xpath = xpath
 
     def __getattr__(self, attr):
-        func_dict = xpath_funcs[attr]
-        for xpath, func in func_dict.items():
+        xpath_func_tuples = xpath_funcs[attr]
+        for xpath, func in xpath_func_tuples:
             if xpath in self.xpath:
                 return functools.partial(func, self)
 
