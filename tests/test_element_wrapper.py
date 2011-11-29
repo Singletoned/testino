@@ -9,16 +9,16 @@ import testino as t
 
 def test_xpath_func():
     with mock.patch.object(t, 'xpath_funcs', dict()):
-        @t.xpath_func("//foo")
+        @t.xpath_func("foo")
         def bar(element):
             return "flibble"
 
-        assert t.xpath_funcs == dict(bar=[("//foo", bar)])
+        assert t.xpath_funcs == dict(bar=[("foo", bar)])
 
 
 def test_element_wrapper_getattr():
     with mock.patch.object(t, 'xpath_funcs', dict()):
-        @t.xpath_func("//form")
+        @t.xpath_func("../form")
         def bar(element):
             return "flibble"
 
@@ -28,26 +28,26 @@ def test_element_wrapper_getattr():
 
 def test_element_wrapper_getattr_mulitple_funcs():
     with mock.patch.object(t, 'xpath_funcs', dict()):
-        @t.xpath_func("//form")
+        @t.xpath_func("../form")
         def bar(element):
             return "This is a form"
         first_bar = bar
 
-        @t.xpath_func("//form[@method='POST']")
+        @t.xpath_func("../form[@method='POST']")
         def bar(element):
             return "This is a POST form"
         second_bar = bar
 
-        @t.xpath_func("//form[@method='GET']")
+        @t.xpath_func("../form[@method='GET']")
         def bar(element):
             return "This is a GET form"
         third_bar = bar
 
         expected = dict(
             bar=[
-                ("//form", first_bar),
-                ("//form[@method='POST']", second_bar),
-                ("//form[@method='GET']", third_bar)])
+                ("../form", first_bar),
+                ("../form[@method='POST']", second_bar),
+                ("../form[@method='GET']", third_bar)])
 
         assert t.xpath_funcs == expected
 
