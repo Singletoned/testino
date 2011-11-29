@@ -170,6 +170,7 @@ class _ElementWrapper(object):
         for xpath, func in reversed(xpath_func_tuples):
             if xpath_matches(xpath, self.element):
                 return functools.partial(func, self)
+        return getattr(self.element, attr)
 
 def _path_from_kwargs(tag, **kwargs):
     text_arg = kwargs.pop('text', '')

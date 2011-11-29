@@ -73,4 +73,17 @@ def test_element_wrapper_getattr_mulitple_funcs():
         assert form_GET_element.bar() == "This is a GET form"
         assert form_DELETE_element.bar() == "This is a form"
 
-        assert not div_element.bar
+        assert not hasattr(div_element, "bar")
+
+def test_element_wrapper_getattr():
+    with mock.patch.object(t, 'xpath_funcs', dict()):
+        @t.xpath_func("../form[@method='GET']")
+        def bar(element):
+            return "This is a GET form"
+        first_bar = bar
+
+        element = lxml.html.fromstring('''<form></form>''')
+        element.bar = "bar"
+        form_GET_element = t._ElementWrapper(element)
+
+        assert form_GET_element.bar == "bar"
