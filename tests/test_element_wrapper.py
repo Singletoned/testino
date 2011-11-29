@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import lxml
+
 import mock
 
 import testino as t
@@ -16,39 +18,50 @@ def test_xpath_func():
 
 def test_element_wrapper_getattr():
     with mock.patch.object(t, 'xpath_funcs', dict()):
-        @t.xpath_func("//foo")
+        @t.xpath_func("//form")
         def bar(element):
             return "flibble"
 
-        assert t._ElementWrapper("foobar").bar() == "flibble"
+        element = lxml.html.fromstring("""<form></form>""")
+        assert t._ElementWrapper(element).bar() == "flibble"
 
 
 def test_element_wrapper_getattr_mulitple_funcs():
     with mock.patch.object(t, 'xpath_funcs', dict()):
-        @t.xpath_func("//foo")
+        @t.xpath_func("//form")
         def bar(element):
-            return "foosome"
+            return "This is a form"
         first_bar = bar
 
-        @t.xpath_func("//wang")
+        @t.xpath_func("//form[@method='POST']")
         def bar(element):
-            return "wangle"
+            return "This is a POST form"
         second_bar = bar
 
-        @t.xpath_func("//oob")
+        @t.xpath_func("//form[@method='GET']")
         def bar(element):
-            return "oobles"
+            return "This is a GET form"
         third_bar = bar
 
         expected = dict(
             bar=[
-                ("//foo", first_bar),
-                ("//wang", second_bar),
-                ("//oob", third_bar)])
+                ("//form", first_bar),
+                ("//form[@method='POST']", second_bar),
+                ("//form[@method='GET']", third_bar)])
 
         assert t.xpath_funcs == expected
 
-        assert t._ElementWrapper("foogalicious").bar() == "foosome"
-        assert t._ElementWrapper("foobar").bar() == "oobles"
-        assert t._ElementWrapper("oobwangle").bar() == "oobles"
-        assert t._ElementWrapper("ding wangle").bar() == "wangle"
+        form_element = lxml.html.fromstring(
+            '''<form></form>''')
+        form_GET_element = lxml.html.fromstring(
+            '''<form method="GET"></form>''')
+        form_POST_element = lxml.html.fromstring(
+            '''<form method="POST"></form>''')
+        form_DELETE_element = lxml.html.fromstring(
+            '''<form method="DELETE"></form>''')
+
+
+        assert t._ElementWrapper(form_element).bar() == "This is a form"
+        assert t._ElementWrapper(form_POST_element).bar() == "This is a POST form"
+        assert t._ElementWrapper(form_GET_element).bar() == "This is a GET form"
+        assert t._ElementWrapper(form_DELETE_element).bar() == "This is a form"

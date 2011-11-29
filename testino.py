@@ -159,8 +159,7 @@ def xpath_func(xpath):
     return _xpath_func
 
 def xpath_matches(xpath, element):
-    if xpath[2:] in element:
-        return True
+    return element in element.xpath(xpath)
 
 class _ElementWrapper(object):
     def __init__(self, element):
