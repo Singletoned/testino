@@ -158,6 +158,10 @@ def xpath_func(xpath):
         return func
     return _xpath_func
 
+def xpath_matches(xpath, node):
+    if xpath[2:] in node:
+        return True
+
 class _ElementWrapper(object):
     def __init__(self, xpath):
         self.xpath = xpath
@@ -165,7 +169,7 @@ class _ElementWrapper(object):
     def __getattr__(self, attr):
         xpath_func_tuples = xpath_funcs[attr]
         for xpath, func in xpath_func_tuples:
-            if xpath in self.xpath:
+            if xpath_matches(xpath, self.xpath):
                 return functools.partial(func, self)
 
 def _path_from_kwargs(tag, **kwargs):
