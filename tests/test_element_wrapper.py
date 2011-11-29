@@ -51,20 +51,26 @@ def test_element_wrapper_getattr_mulitple_funcs():
 
         assert t.xpath_funcs == expected
 
-        form_element = lxml.html.fromstring(
-            '''<form></form>''')
-        form_GET_element = lxml.html.fromstring(
-            '''<form method="GET"></form>''')
-        form_POST_element = lxml.html.fromstring(
-            '''<form method="POST"></form>''')
-        form_DELETE_element = lxml.html.fromstring(
-            '''<form method="DELETE"></form>''')
-        div_element = lxml.html.fromstring('''<div><form method="DELETE"></form></div>''')
+        form_element = t._ElementWrapper(
+            lxml.html.fromstring(
+                '''<form></form>'''))
+        form_GET_element = t._ElementWrapper(
+            lxml.html.fromstring(
+                '''<form method="GET"></form>'''))
+        form_POST_element = t._ElementWrapper(
+            lxml.html.fromstring(
+                '''<form method="POST"></form>'''))
+        form_DELETE_element = t._ElementWrapper(
+            lxml.html.fromstring(
+                '''<form method="DELETE"></form>'''))
+        div_element = t._ElementWrapper(
+            lxml.html.fromstring(
+                '''<div><form method="DELETE"></form></div>'''))
 
 
-        assert t._ElementWrapper(form_element).bar() == "This is a form"
-        assert t._ElementWrapper(form_POST_element).bar() == "This is a POST form"
-        assert t._ElementWrapper(form_GET_element).bar() == "This is a GET form"
-        assert t._ElementWrapper(form_DELETE_element).bar() == "This is a form"
+        assert form_element.bar() == "This is a form"
+        assert form_POST_element.bar() == "This is a POST form"
+        assert form_GET_element.bar() == "This is a GET form"
+        assert form_DELETE_element.bar() == "This is a form"
 
-        assert not t._ElementWrapper(div_element).bar
+        assert not div_element.bar
