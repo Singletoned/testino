@@ -168,7 +168,7 @@ class _ElementWrapper(object):
 
     def __getattr__(self, attr):
         xpath_func_tuples = xpath_funcs[attr]
-        for xpath, func in xpath_func_tuples:
+        for xpath, func in reversed(xpath_func_tuples):
             if xpath_matches(xpath, self.element):
                 return functools.partial(func, self)
 
