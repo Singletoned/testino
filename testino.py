@@ -158,18 +158,18 @@ def xpath_func(xpath):
         return func
     return _xpath_func
 
-def xpath_matches(xpath, node):
-    if xpath[2:] in node:
+def xpath_matches(xpath, element):
+    if xpath[2:] in element:
         return True
 
 class _ElementWrapper(object):
-    def __init__(self, xpath):
-        self.xpath = xpath
+    def __init__(self, element):
+        self.element = element
 
     def __getattr__(self, attr):
         xpath_func_tuples = xpath_funcs[attr]
         for xpath, func in xpath_func_tuples:
-            if xpath_matches(xpath, self.xpath):
+            if xpath_matches(xpath, self.element):
                 return functools.partial(func, self)
 
 def _path_from_kwargs(tag, **kwargs):
