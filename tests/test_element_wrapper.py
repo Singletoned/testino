@@ -4,6 +4,7 @@ import mock
 
 import testino as t
 
+
 def test_xpath_func():
     with mock.patch.object(t, 'xpath_funcs', dict()):
         @t.xpath_func("foo")
@@ -20,5 +21,3 @@ def test_element_wrapper_getattr():
             return "flibble"
 
         assert t._ElementWrapper("foobar").bar() == "flibble"
-
-
