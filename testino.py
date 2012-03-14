@@ -584,7 +584,12 @@ class ElementWrapper(object):
         """
         Return the form associated with the wrapped element.
         """
-        return self.__class__(self.agent, self.element.xpath("./ancestor-or-self::form[1]")[0])
+        if self.attrib.has_key('form'):
+            form_id = self.attrib.get('form', False)
+            element = self.one("//form[@id=$form_id]", form_id=form_id)
+        else:
+            element = self.one("./ancestor-or-self::form[1]")
+        return element
 
     @when("input[@type='submit' or @type='image']|button[@type='submit' or not(@type)]")
     def submit(self, follow=False):

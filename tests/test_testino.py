@@ -984,6 +984,20 @@ def test_form_submit_selects_a_default_button():
     form = page.form
     assert form.submit_data() == [("foo", ""), ("submit", "Save")]
 
+def test_button_form_property():
+    html_form = '''
+    <html><body>
+      <form method="POST" id="flibble" action="/flibble">
+        <input type="text" name="foo" value="">
+        <input type="submit" name="submit" value="Save">
+      </form>
+      <button form="flibble">Another Button</button>
+    </body></html>'''
+    page = TestAgent(wz.Response(html_form)).get('/')
+    form = page.form
+    button = page.one("//button")
+    assert button.form == form
+
 def test_form_button():
     html_form = '''
     <html><body>
