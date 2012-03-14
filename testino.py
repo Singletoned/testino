@@ -749,6 +749,8 @@ class ElementWrapper(object):
         data = []
         elements = self.all(
             ".//button|.//input|.//keygen|.//object|.//select|.//textarea")
+        if button and (button not in elements):
+            elements.append(button)
         elements = [el for el in elements if not 'disabled' in el.attrib]
         elements = filter_unnamed_buttons(elements)
         elements = filter_unclicked_buttons(button, elements)
