@@ -1187,10 +1187,13 @@ class TestAgent(object):
         """
         return self.one(u'//form')
 
-    def click(self, path=None, follow=False, **kwargs):
+    def click(self, path=None, follow=False, many=False, **kwargs):
         if not path:
             path = _path_from_kwargs('a', **kwargs)
-        return self.one(path).click(follow=follow)
+        if many:
+            return self.all(path)[0].click(follow=follow)
+        else:
+            return self.one(path).click(follow=follow)
 
     def _click(self, element, follow=False):
         href = element.attrib['href']

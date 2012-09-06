@@ -337,6 +337,16 @@ def test_click():
         page.one('//a[text()="page 1" and @href="page1"]').click().request.path
     )
 
+def test_click_many():
+    body = """<p><a href="page1">page 1</a><a href="page1">page 1</a></p>"""
+    agent = TestAgent(wz.Response(body)).get('/')
+    assert_raises(
+        testino.MultipleMatchesError,
+        agent.click,
+        text="page 1"
+    )
+    assert agent.click(text="page 1", many=True)
+
 def test_rows_to_dict():
     body_1 = """
 <table>
