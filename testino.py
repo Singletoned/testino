@@ -948,7 +948,13 @@ class TestAgent(object):
             history = self.history
 
         response = self.response_class.from_app(self.app, environ)
-        agent = self.__class__(self.app, wz.Request(environ), response, self.cookies, history, validate_wsgi=False)
+        agent = self.__class__(
+            self.app,
+            wz.Request(environ),
+            response,
+            self.cookies,
+            history,
+            validate_wsgi=False)
         if status and (status != response.status):
             raise BadResponse(response.status, status)
         if response.status == "404 NOT FOUND":
