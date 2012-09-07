@@ -868,7 +868,7 @@ class TestAgent(object):
         'wsgi.run_once': False,
     }
 
-    def __init__(self, app, request=None, response=None, cookies=None, history=None, validate_wsgi=False):
+    def __init__(self, app, request=None, response=None, cookies=None, history=None, validate_wsgi=False, use_css=False):
         # TODO: Make validate_wsgi pass
         if validate_wsgi:
             app = wsgi_validator(app)
@@ -876,6 +876,7 @@ class TestAgent(object):
         self.request = request
         self.response = response
         self._elements = []
+        self.use_css = use_css
 
         # Stores file upload field values in forms
         self.file_uploads = {}
@@ -954,7 +955,8 @@ class TestAgent(object):
             response,
             self.cookies,
             history,
-            validate_wsgi=False)
+            validate_wsgi=False,
+            use_css=self.use_css)
         if status and (status != response.status):
             raise BadResponse(response.status, status)
         if response.status == "404 NOT FOUND":
@@ -1171,6 +1173,7 @@ class TestAgent(object):
         Returns the first result from Agent.all.  Raises an error if
         more than one result is found.
         """
+        css = self.use_css or css
         elements = self.all(path, css=css, **kwargs)
         if len(elements) > 1:
             raise MultipleMatchesError(path.encode('utf8'), elements, kwargs)
@@ -1183,6 +1186,7 @@ class TestAgent(object):
         """
         Returns the results of Agent.find, or Agent._findcss if css is True
         """
+        css = self.use_css or css
         elements = self._find(path, css=css, **kwargs)
         return [ElementWrapper(self, el) for el in elements]
 

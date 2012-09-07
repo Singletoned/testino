@@ -1226,3 +1226,16 @@ def test_has_class():
     assert not p.has_class("f")
     assert not p.has_class("fo")
     assert not p.has_class("Flibble")
+
+def test_css_agent():
+    body = '''
+<div id="foo">
+  <p class="flibble">Flibble</p>
+  <p class="flooble">Flooble</p>
+</div>
+'''
+    agent = TestAgent(wz.Response(body), use_css=True)
+    page = agent.get('/')
+    assert page.use_css
+    assert page.one(".flibble").text == "Flibble"
+    assert len(page.all("#foo p")) == 2
