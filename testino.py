@@ -436,7 +436,7 @@ class ElementWrapper(object):
         """
         found = False
         for el in self.element.xpath(".//option"):
-            if (el.attrib.get('value') == value):
+            if (el.attrib.get('value', el.text) == value):
                 el.attrib['selected'] = ""
                 found = True
             elif 'selected' in el.attrib:
