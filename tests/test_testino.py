@@ -337,6 +337,16 @@ def test_click():
         page.one('//a[text()="page 1" and @href="page1"]').click().request.path
     )
 
+def test_click_many():
+    body = """<p><a href="page1">page 1</a><a href="page1">page 1</a></p>"""
+    agent = TestAgent(wz.Response(body)).get('/')
+    assert_raises(
+        testino.MultipleMatchesError,
+        agent.click,
+        text="page 1"
+    )
+    assert agent.click(text="page 1", many=True)
+
 def test_rows_to_dict():
     body_1 = """
 <table>
@@ -577,6 +587,23 @@ def test_select_default_option():
     form = page.form
     assert form['words'] == "floozle"
     assert form.one("//option[@value=$value]", value="floozle").selected
+
+def test_select_option_with_no_value():
+    body = """
+    <form method="" id="" action="">
+      <select name="words">
+        <option value="floozle">Floozle</option>
+        <option value="flamble">Flamble</option>
+        <option selected>Blat</option>
+        <option>Blop</option>
+      </select>
+    </form>
+    """
+    page = TestAgent(wz.Response(body)).get(u'/')
+    form = page.form
+    assert form['words'] == "Blat"
+    form['words'] = "Blop"
+    assert form.one("//option[text()=$text]", text="Blop").selected
 
 def test_form_checkbox():
     form_page = TestAgent(TestApp()).get('/form-checkbox')
