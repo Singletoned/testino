@@ -1,2 +1,3 @@
 lxml>=2.3
+cssselect
 werkzeug>=0.7
