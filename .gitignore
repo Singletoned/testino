@@ -1,0 +1,5 @@
+*.pyc
+testino.egg-info/*
+.DS_Store
+*.DS_Store
+dist/*
