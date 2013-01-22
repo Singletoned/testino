@@ -449,7 +449,10 @@ class ElementWrapper(object):
         """
         Get the value of an option
         """
-        return self.attrib.get('value', None)
+        if 'value' in self.attrib:
+            return self.attrib.get('value', None)
+        else:
+            return self.text_content()
 
     value = property(_get_value, _set_value)
 
