@@ -1245,3 +1245,41 @@ def test_has_class():
     assert not p.has_class("f")
     assert not p.has_class("fo")
     assert not p.has_class("Flibble")
+
+def test_post():
+    class MockTestAgent(TestAgent):
+        request = None
+
+        def _request(self, *args, **kwargs):
+            return (args, kwargs)
+
+        def make_environ(self, *args, **kwargs):
+            return (args, kwargs)
+
+    mock_test_agent = MockTestAgent(None)
+
+    result = TestAgent.post(
+        mock_test_agent,
+        "/url",
+        data={'foo': 'bar', 'a': 1, 'b': 2},
+        content_type="application/json")
+
+    result = result[0][0]
+    assert result[0] == ("POST",)
+    assert result[1]['CONTENT_LENGTH'] == "30"
+    assert result[1]['CONTENT_TYPE'] == "application/json"
+    assert result[1]['PATH_INFO'] == "/url"
+    assert result[1]['wsgi_input'].getvalue() == '''{"a": 1, "foo": "bar", "b": 2}'''
+
+
+    result = TestAgent.post(
+        mock_test_agent,
+        "/url",
+        data={'foo': 'bar', 'a': 1, 'b': 2})
+
+    result = result[0][0]
+    assert result[0] == ("POST",)
+    assert result[1]['CONTENT_LENGTH'] == "15"
+    assert result[1]['CONTENT_TYPE'] == "application/x-www-form-urlencoded"
+    assert result[1]['PATH_INFO'] == "/url"
+    assert result[1]['wsgi_input'].getvalue() == "a=1&foo=bar&b=2"

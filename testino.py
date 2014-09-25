@@ -8,6 +8,7 @@ import functools
 import itertools
 from shutil import copyfileobj
 import re
+import json
 
 import lxml.html
 from lxml.cssselect import CSSSelector
@@ -979,7 +980,7 @@ class TestAgent(object):
             status=status,
         )
 
-    def post(self, PATH_INFO='/', data=None, charset='UTF-8', follow=False, history=True, status=None, **kwargs):
+    def post(self, PATH_INFO='/', data=None, charset='UTF-8', follow=False, history=True, status=None, content_type="application/x-www-form-urlencoded", **kwargs):
         """
         Make a POST request to the application and return the response.
         """
@@ -989,14 +990,18 @@ class TestAgent(object):
         if self.request:
             PATH_INFO = uri_join_same_server(self.request.url, PATH_INFO)
 
-        data = wz.url_encode(data, charset=charset, separator='&')
+        if content_type == "application/json":
+            data = json.dumps(data)
+        else:
+            data = wz.url_encode(data, charset=charset, separator='&')
+
         wsgi_input = StringIO(data)
         wsgi_input.seek(0)
 
         return self._request(
             self.make_environ(
                 'POST', PATH_INFO=PATH_INFO,
-                CONTENT_TYPE="application/x-www-form-urlencoded",
+                CONTENT_TYPE=content_type,
                 CONTENT_LENGTH=str(len(data)),
                 wsgi_input=wsgi_input,
                 **kwargs
