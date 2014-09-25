@@ -1008,8 +1008,7 @@ class TestAgent(object):
             ),
             follow,
             history,
-            status=status,
-        )
+            status=status)
 
     def post_multipart(self, PATH_INFO='/', data=None, files=None, charset='UTF-8', follow=False, **kwargs):
         """
