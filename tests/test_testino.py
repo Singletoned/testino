@@ -1283,3 +1283,15 @@ def test_post():
     assert result[1]['CONTENT_TYPE'] == "application/x-www-form-urlencoded"
     assert result[1]['PATH_INFO'] == "/url"
     assert result[1]['wsgi_input'].getvalue() == "a=1&foo=bar&b=2"
+
+
+def test_css_agent():
+    form_page = TestAgent(
+        FormApp(
+            '''
+            <input class="foo"/>
+            <textarea id="bar"/>
+            <input name="r" type="text"/>'''),
+        selector="css").get('/')
+    assert form_page.one("input.foo")
+    assert form_page.one("textarea#bar")

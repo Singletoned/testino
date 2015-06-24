@@ -67,6 +67,22 @@ class BadResponse(Exception):
         return "The status %s did not match %s" % (
             self.response_status, self.expected_status)
 
+def css_selector(element, path, **kwargs):
+    return CSSSelector(path)(element)
+
+def xpath_selector(element, path, namespaces, **kwargs):
+    ns = {'re': REGEXP_NAMESPACE}
+    if namespaces is not None:
+        ns.update(namespaces)
+    namespaces = ns
+    result = element.xpath(path, namespaces=namespaces, **kwargs)
+    return result
+
+selectors = dict(
+    css=css_selector,
+    xpath=xpath_selector)
+
+
 def browserify(tree):
     """Fix up a html tree to be more like what the browser actually deals with"""
     # Select first options of unselected, non-multiple selects
@@ -872,7 +888,7 @@ class TestAgent(object):
         'wsgi.run_once': False,
     }
 
-    def __init__(self, app, request=None, response=None, cookies=None, history=None, validate_wsgi=False):
+    def __init__(self, app, request=None, response=None, cookies=None, history=None, validate_wsgi=False, selector="xpath"):
         # TODO: Make validate_wsgi pass
         if validate_wsgi:
             app = wsgi_validator(app)
@@ -894,6 +910,8 @@ class TestAgent(object):
             self.history = history
         else:
             self.history = []
+
+        self.selector = selector
 
     @classmethod
     def make_environ(cls, REQUEST_METHOD='GET', PATH_INFO='', wsgi_input='', **kwargs):
@@ -952,7 +970,7 @@ class TestAgent(object):
             history = self.history
 
         response = self.response_class.from_app(self.app, environ)
-        agent = self.__class__(self.app, wz.Request(environ), response, self.cookies, history, validate_wsgi=False)
+        agent = self.__class__(self.app, wz.Request(environ), response, self.cookies, history, validate_wsgi=False, selector=self.selector)
         if status and (status != response.status):
             raise BadResponse(response.status, status)
         if response.status == "404 NOT FOUND":
@@ -1156,16 +1174,10 @@ class TestAgent(object):
         the prefix ``re``.
         """
         if css:
-            selector = CSSSelector(path)
-            return selector(self.lxml)
-
-        ns = {'re': REGEXP_NAMESPACE}
-        if namespaces is not None:
-            ns.update(namespaces)
-        namespaces = ns
-
-        result = self.lxml.xpath(path, namespaces=namespaces, **kwargs)
-        return result
+            selector = selectors['css']
+        else:
+            selector = selectors[self.selector]
+        return selector(self.lxml, path, namespaces=namespaces, **kwargs)
 
     def one(self, path, css=False, **kwargs):
         """
