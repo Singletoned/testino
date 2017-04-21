@@ -23,7 +23,7 @@ class StubResponse(object):
         self.content = content
 
 
-class TestAgent(unittest.TestCase):
+class TestResponse(unittest.TestCase):
     def setUp(self):
         self.response = Response(StubResponse(document))
 
