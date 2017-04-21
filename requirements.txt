@@ -1,4 +1,7 @@
 lxml>=2.3
 cssselect
-werkzeug>=0.7
+parsel
+requests
+requests-wsgi-adapter
 nose
+pyjade
