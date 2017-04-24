@@ -8,6 +8,10 @@ import lxml.html
 from parsel.csstranslator import HTMLTranslator
 
 
+class XPath(str):
+    pass
+
+
 class Agent(object):
     def __init__(self, wsgi_app, base_url="http://example.com/"):
         self.app = wsgi_app
@@ -31,7 +35,8 @@ class Response(object):
         return getattr(self.response, key)
 
     def one(self, selector):
-        selector = HTMLTranslator().css_to_xpath(selector)
+        if not isinstance(selector, XPath):
+            selector = HTMLTranslator().css_to_xpath(selector)
         els = lxml.html.fromstring(self.content).xpath(selector)
         assert len(els) == 1, "Length is {}".format(len(els))
         return els[0]
@@ -51,3 +56,9 @@ class Response(object):
         selector = HTMLTranslator().css_to_xpath(selector)
         els = lxml.html.fromstring(self.content).xpath(selector)
         return els
+
+    def click(self, text):
+        css_path = "a:contains('{}')".format(text)
+        els = self.one(css_path)
+        url = els.attrib['href']
+        return self.agent.get(url)

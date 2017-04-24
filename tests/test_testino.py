@@ -5,7 +5,7 @@ import unittest
 import nose
 import pyjade
 
-from testino import Response
+from testino import Response, XPath
 
 
 document = pyjade.simple_convert('''
@@ -34,6 +34,14 @@ class TestResponse(unittest.TestCase):
     def test_one_fails(self):
         with nose.tools.assert_raises(AssertionError):
             self.response.one("div#fumble")
+
+    def test_one_xpath(self):
+        el = self.response.one(XPath("//div[@id='foo']"))
+        assert el.text_content().strip() == "This is foo"
+
+    def test_one_fails_xpath(self):
+        with nose.tools.assert_raises(AssertionError):
+            self.response.one(XPath("//div[@id='fumble']"))
 
     def test_has_one(self):
         assert self.response.has_one("div#foo")
