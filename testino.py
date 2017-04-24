@@ -41,6 +41,12 @@ class Response(object):
         els = lxml.html.fromstring(self.content).xpath(selector)
         return len(els) == 1
 
+    def has_text(self, text):
+        selector = "*:contains({})".format(repr(text))
+        selector = HTMLTranslator().css_to_xpath(selector)
+        els = lxml.html.fromstring(self.content).xpath(selector)
+        return len(els) > 0
+
     def all(self, selector):
         selector = HTMLTranslator().css_to_xpath(selector)
         els = lxml.html.fromstring(self.content).xpath(selector)

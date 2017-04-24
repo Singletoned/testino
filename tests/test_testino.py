@@ -44,3 +44,9 @@ class TestResponse(unittest.TestCase):
     def test_all(self):
         els = self.response.all("div")
         assert len(els) == 2
+
+    def test_has_text(self):
+        assert self.response.has_text("This is foo")
+
+    def test_has_text_fails(self):
+        assert not self.response.has_text("Say hello to Mr Flibble")
