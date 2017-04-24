@@ -63,8 +63,9 @@ class Response(object):
         els = lxml.html.fromstring(self.content).xpath(selector)
         return els
 
-    def click(self, text):
-        css_path = "a:contains('{}')".format(text)
-        els = self.one(css_path)
+    def click(self, selector=None, contains=None):
+        if contains:
+            selector = "a:contains('{}')".format(contains)
+        els = self.one(selector)
         url = els.attrib['href']
         return self.agent.get(url)

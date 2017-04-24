@@ -15,9 +15,9 @@ html
       p This is foo
     div#bar
       p This is bar
-    a(href="/bumble")
+    a#bumble(href="/bumble")
       button Bumble
-    a(href="/famble")
+    a#famble(href="/famble")
       button Famble
 ''')
 
@@ -64,7 +64,12 @@ class TestResponse(unittest.TestCase):
     def test_has_text_fails(self):
         assert not self.response.has_text("Say hello to Mr Flibble")
 
-    def test_click(self):
-        self.response.click("Bumble")
+    def test_click_contains(self):
+        self.response.click(contains="Bumble")
+        expected_calls = [unittest.mock.call.get('/bumble')]
+        assert self.mock_agent.mock_calls == expected_calls
+
+    def test_click_id(self):
+        self.response.click("#bumble")
         expected_calls = [unittest.mock.call.get('/bumble')]
         assert self.mock_agent.mock_calls == expected_calls
