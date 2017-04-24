@@ -17,7 +17,7 @@ class Agent(object):
         self.app = wsgi_app
         self.base_url = base_url
         self.session = requests.Session()
-        self.session.hooks = {'response': Response}
+        self.session.hooks = {'response': self.make_response}
         self.session.mount(
             self.base_url,
             wsgiadapter.WSGIAdapter(self.app))
@@ -26,10 +26,16 @@ class Agent(object):
         url = urllib.parse.urljoin(self.base_url, url)
         return self.session.get(url)
 
+    def make_response(self, response, **kwargs):
+        return Response(
+            response=response,
+            agent=self)
+
 
 class Response(object):
-    def __init__(self, response, **kwargs):
+    def __init__(self, response, agent):
         self.response = response
+        self.agent = agent
 
     def __getattr__(self, key):
         return getattr(self.response, key)
