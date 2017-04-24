@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import unittest
+import unittest.mock
 
 import nose
 import pyjade
@@ -15,6 +15,10 @@ html
       p This is foo
     div#bar
       p This is bar
+    a(href="/bumble")
+      button Bumble
+    a(href="/famble")
+      button Famble
 ''')
 
 
@@ -25,7 +29,8 @@ class StubResponse(object):
 
 class TestResponse(unittest.TestCase):
     def setUp(self):
-        self.response = Response(StubResponse(document))
+        self.mock_agent = unittest.mock.Mock()
+        self.response = Response(StubResponse(document), agent=self.mock_agent)
 
     def test_one(self):
         el = self.response.one("div#foo")
@@ -58,3 +63,8 @@ class TestResponse(unittest.TestCase):
 
     def test_has_text_fails(self):
         assert not self.response.has_text("Say hello to Mr Flibble")
+
+    def test_click(self):
+        self.response.click("Bumble")
+        expected_calls = [unittest.mock.call.get('/bumble')]
+        assert self.mock_agent.mock_calls == expected_calls
