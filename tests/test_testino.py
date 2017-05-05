@@ -25,12 +25,17 @@ html
 class StubResponse(object):
     def __init__(self, content):
         self.content = content
+        self.url = "http://www.example.com/flibble"
 
 
 class TestResponse(unittest.TestCase):
     def setUp(self):
         self.mock_agent = unittest.mock.Mock()
         self.response = Response(StubResponse(document), agent=self.mock_agent)
+
+    def test_path(self):
+        path = self.response.path
+        assert path == "/flibble"
 
     def test_one(self):
         el = self.response.one("div#foo")
