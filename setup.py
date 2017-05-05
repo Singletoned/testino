@@ -9,7 +9,7 @@ data = dict(
         'Development Status :: 4 - Beta',
         'Environment :: Web Environment',
         'Intended Audience :: Developers',
-        'License :: OSI Approved :: BSD License',
+        'License :: OSI Approved :: MIT License',
         'Topic :: Internet :: WWW/HTTP :: WSGI',
         'Topic :: Software Development :: Testing',
     ],
