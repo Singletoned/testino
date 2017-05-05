@@ -22,9 +22,12 @@ data = dict(
     include_package_data=True,
     zip_safe=False,
     install_requires=[
-        'lxml>=3.7',
-        'werkzeug>=0.12',
-        # -*- Extra requirements: -*-
+        "lxml>=3.7",
+        "werkzeug>=0.12",
+        "cssselect>=1",
+        "parsel>=1.1",
+        "requests>=2",
+        "requests-wsgi-adapter>=0.2",
     ],
     entry_points="""
     # -*- Entry points: -*-
