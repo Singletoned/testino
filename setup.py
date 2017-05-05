@@ -1,4 +1,4 @@
-from setuptools import setup, find_packages
+from setuptools import setup
 
 data = dict(
     name='testino',
@@ -16,7 +16,7 @@ data = dict(
     keywords='',
     author='Ed Singleton',
     author_email='singletoned@gmail.com',
-    url='',
+    url='https://github.com/Singletoned/testino',
     license='BSD',
     py_modules=['testino'],
     include_package_data=True,
