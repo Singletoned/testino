@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 data = dict(
     name='testino',
-    version='0.2.2',
+    version='0.3',
     description="Test WSGI applications using lxml",
     long_description="",
     classifiers=[
@@ -22,8 +22,8 @@ data = dict(
     include_package_data=True,
     zip_safe=False,
     install_requires=[
-        'lxml>=2.3',
-        'werkzeug>=0.6',
+        'lxml>=3.7',
+        'werkzeug>=0.12',
         # -*- Extra requirements: -*-
     ],
     entry_points="""
