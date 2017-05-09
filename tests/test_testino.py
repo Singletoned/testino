@@ -74,6 +74,11 @@ class TestResponse(unittest.TestCase):
         expected_calls = [unittest.mock.call.get('/bumble')]
         assert self.mock_agent.mock_calls == expected_calls
 
+    def test_click_contains_index(self):
+        self.response.click(contains="ble", index=1)
+        expected_calls = [unittest.mock.call.get('/famble')]
+        assert self.mock_agent.mock_calls == expected_calls
+
     def test_click_id(self):
         self.response.click("#bumble")
         expected_calls = [unittest.mock.call.get('/bumble')]
