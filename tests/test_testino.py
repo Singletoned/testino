@@ -26,6 +26,7 @@ class StubResponse(object):
     def __init__(self, content):
         self.content = content
         self.url = "http://www.example.com/flibble"
+        self.headers = {"Content-Type": "text/html; charset=utf-8"}
 
 
 class TestResponse(unittest.TestCase):
@@ -36,6 +37,12 @@ class TestResponse(unittest.TestCase):
     def test_path(self):
         path = self.response.path
         assert path == "/flibble"
+
+    def test_mime_type(self):
+        assert self.response.mime_type == "text/html"
+
+    def test_charset(self):
+        assert self.response.charset == "utf-8"
 
     def test_one(self):
         el = self.response.one("div#foo")

@@ -6,6 +6,7 @@ import requests
 import wsgiadapter
 import lxml.html
 from parsel.csstranslator import HTMLTranslator
+from werkzeug.http import parse_options_header
 
 
 class XPath(str):
@@ -43,6 +44,15 @@ class Response(object):
     @property
     def path(self):
         return urllib.parse.urlparse(self.url).path
+
+    @property
+    def mime_type(self):
+        return parse_options_header(self.headers['Content-Type'])[0]
+
+    @property
+    def charset(self):
+        return parse_options_header(
+            self.headers['Content-Type'])[1].get('charset', "")
 
     def one(self, selector):
         if not isinstance(selector, XPath):
