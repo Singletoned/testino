@@ -5,3 +5,4 @@ requests
 requests-wsgi-adapter
 nose
 pyjade
+werkzeug
