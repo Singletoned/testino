@@ -6,3 +6,4 @@ requests-wsgi-adapter
 nose
 pyjade
 werkzeug
+requests-mock
