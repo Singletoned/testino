@@ -4,8 +4,9 @@ import unittest.mock
 
 import nose
 import pyjade
+import requests_mock
 
-from testino import Response, XPath, WSGIAgent
+from testino import Response, XPath, WSGIAgent, BaseAgent
 
 
 document = pyjade.simple_convert('''
@@ -31,6 +32,14 @@ def test_WSGIAgent():
     agent = WSGIAgent(wsgi_app)
     response = agent.get("/")
     assert response.content == b"This is a WSGI app"
+
+
+@requests_mock.mock()
+def test_BaseAgent(mock_requests):
+    mock_requests.get("http://example.com/foo", text='This is not a WSGI app')
+    agent = BaseAgent("http://example.com")
+    response = agent.get("/foo")
+    assert response.content == b"This is not a WSGI app"
 
 
 class StubResponse(object):
