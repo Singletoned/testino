@@ -13,15 +13,11 @@ class XPath(str):
     pass
 
 
-class Agent(object):
-    def __init__(self, wsgi_app, base_url="http://example.com/"):
-        self.app = wsgi_app
+class BaseAgent(object):
+    def __init__(self, base_url):
         self.base_url = base_url
         self.session = requests.Session()
         self.session.hooks = {'response': self.make_response}
-        self.session.mount(
-            self.base_url,
-            wsgiadapter.WSGIAdapter(self.app))
 
     def get(self, url):
         url = urllib.parse.urljoin(self.base_url, url)
@@ -31,6 +27,15 @@ class Agent(object):
         return Response(
             response=response,
             agent=self)
+
+
+class WSGIAgent(BaseAgent):
+    def __init__(self, wsgi_app, base_url="http://example.com/"):
+        super(WSGIAgent, self).__init__(base_url)
+        self.app = wsgi_app
+        self.session.mount(
+            self.base_url,
+            wsgiadapter.WSGIAdapter(self.app))
 
 
 class Response(object):

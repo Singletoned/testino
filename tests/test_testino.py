@@ -5,7 +5,7 @@ import unittest.mock
 import nose
 import pyjade
 
-from testino import Response, XPath
+from testino import Response, XPath, WSGIAgent
 
 
 document = pyjade.simple_convert('''
@@ -20,6 +20,17 @@ html
     a#famble(href="/famble")
       button Famble
 ''')
+
+
+def wsgi_app(env, start_response):
+    start_response('200 OK', [('Content-Type','text/html')])
+    return [b"This is a WSGI app"]
+
+
+def test_WSGIAgent():
+    agent = WSGIAgent(wsgi_app)
+    response = agent.get("/")
+    assert response.content == b"This is a WSGI app"
 
 
 class StubResponse(object):
