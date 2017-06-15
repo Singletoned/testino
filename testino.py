@@ -42,6 +42,7 @@ class Response(object):
     def __init__(self, response, agent):
         self.response = response
         self.agent = agent
+        self.lxml = lxml.html.fromstring(self.content)
 
     def __getattr__(self, key):
         return getattr(self.response, key)
@@ -62,24 +63,24 @@ class Response(object):
     def one(self, selector):
         if not isinstance(selector, XPath):
             selector = HTMLTranslator().css_to_xpath(selector)
-        els = lxml.html.fromstring(self.content).xpath(selector)
+        els = self.lxml.xpath(selector)
         assert len(els) == 1, "Length is {}".format(len(els))
         return els[0]
 
     def has_one(self, selector):
         selector = HTMLTranslator().css_to_xpath(selector)
-        els = lxml.html.fromstring(self.content).xpath(selector)
+        els = self.lxml.xpath(selector)
         return len(els) == 1
 
     def has_text(self, text):
         selector = "*:contains({})".format(repr(text))
         selector = HTMLTranslator().css_to_xpath(selector)
-        els = lxml.html.fromstring(self.content).xpath(selector)
+        els = self.lxml.xpath(selector)
         return len(els) > 0
 
     def all(self, selector):
         selector = HTMLTranslator().css_to_xpath(selector)
-        els = lxml.html.fromstring(self.content).xpath(selector)
+        els = self.lxml.xpath(selector)
         return els
 
     def click(self, selector=None, contains=None, index=None):
