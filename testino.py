@@ -60,6 +60,9 @@ class Response(object):
         return parse_options_header(
             self.headers['Content-Type'])[1].get('charset', "")
 
+    def to_string(self):
+        return lxml.html.tostring(self.lxml)
+
     def one(self, selector):
         if not isinstance(selector, XPath):
             selector = HTMLTranslator().css_to_xpath(selector)
