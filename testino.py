@@ -95,3 +95,17 @@ class Response(object):
             els = self.all(selector)[index]
         url = els.attrib['href']
         return self.agent.get(url)
+
+    def get_form(self):
+        return Form(self, self.one("form"))
+
+
+class Form(object):
+    def __init__(self, response, element):
+        self.response = response
+        self.element = element
+
+    def __setitem__(self, key, value):
+        css_path = "*[name='{}']".format(key)
+        element = self.response.one(css_path)
+        element.value = value

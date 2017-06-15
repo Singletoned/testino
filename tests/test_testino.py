@@ -23,6 +23,14 @@ html
 ''')
 
 
+form_document = pyjade.simple_convert('''
+html
+  body
+    form
+      input(name="flibble")
+''')
+
+
 def wsgi_app(env, start_response):
     start_response('200 OK', [('Content-Type','text/html')])
     return [b"This is a WSGI app"]
@@ -110,3 +118,15 @@ class TestResponse(unittest.TestCase):
         self.response.click("#bumble")
         expected_calls = [unittest.mock.call.get('/bumble')]
         assert self.mock_agent.mock_calls == expected_calls
+
+
+class TestForm(unittest.TestCase):
+    def setUp(self):
+        self.mock_agent = unittest.mock.Mock()
+        self.response = Response(
+            StubResponse(form_document), agent=self.mock_agent)
+
+    def test_checkbox(self):
+        form = self.response.get_form()
+        form['flibble'] = "flamble"
+        assert self.response.has_one("input[value='flamble']")
