@@ -19,9 +19,9 @@ class BaseAgent(object):
         self.session = requests.Session()
         self.session.hooks = {'response': self.make_response}
 
-    def get(self, url):
+    def get(self, url, params=None):
         url = urllib.parse.urljoin(self.base_url, url)
-        return self.session.get(url)
+        return self.session.get(url, params=params)
 
     def make_response(self, response, **kwargs):
         return Response(
@@ -105,6 +105,14 @@ class Form(object):
         self.response = response
         self.element = element
 
+    @property
+    def method(self):
+        return self.element.attrib.get('method', 'GET').upper()
+
+    @property
+    def action(self):
+        return self.element.attrib.get('action')
+
     def __setitem__(self, key, value):
         css_path = "*[name='{}']".format(key)
         element = self.response.one(css_path)
@@ -121,3 +129,9 @@ class Form(object):
         data = self._submit_data()
         data = dict((k,v) for (k,v) in data if k)
         return data
+
+    def submit(self):
+        data = self.submit_data()
+        func = getattr(self.response.agent, self.method.lower())
+        response = func(self.action, params=data)
+        return response

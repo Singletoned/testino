@@ -26,7 +26,7 @@ html
 form_document = pyjade.simple_convert('''
 html
   body
-    form
+    form(action="/result_page")
       input(name="flibble")
 ''')
 
@@ -122,11 +122,11 @@ class TestResponse(unittest.TestCase):
 
 class TestForm(unittest.TestCase):
     def setUp(self):
-        self.mock_agent = unittest.mock.Mock()
+        self.agent = WSGIAgent(wsgi_app)
         self.response = Response(
-            StubResponse(form_document), agent=self.mock_agent)
+            StubResponse(form_document), agent=self.agent)
 
-    def test_checkbox(self):
+    def test_input(self):
         form = self.response.get_form()
         form['flibble'] = "flamble"
         assert self.response.has_one("input[value='flamble']")
@@ -137,3 +137,10 @@ class TestForm(unittest.TestCase):
         result = form.submit_data()
         expected = {'flibble': "flamble"}
         assert result == expected
+
+    def test_submit(self):
+        form = self.response.get_form()
+        form['flibble'] = "flamble"
+        expected_path = form.action
+        page = form.submit()
+        assert page.path == expected_path
