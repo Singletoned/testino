@@ -109,3 +109,15 @@ class Form(object):
         css_path = "*[name='{}']".format(key)
         element = self.response.one(css_path)
         element.value = value
+
+    def _submit_data(self):
+        els = self.element.xpath(".//input")
+        for el in els:
+            name = el.attrib.get('name', '')
+            value = el.attrib.get('value', '')
+            yield (name, value)
+
+    def submit_data(self):
+        data = self._submit_data()
+        data = dict((k,v) for (k,v) in data if k)
+        return data
