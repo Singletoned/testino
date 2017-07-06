@@ -84,7 +84,7 @@ class Response(object):
     def all(self, selector):
         selector = HTMLTranslator().css_to_xpath(selector)
         els = self.lxml.xpath(selector)
-        return els
+        return tuple(els)
 
     def click(self, selector=None, contains=None, index=None):
         if contains:

@@ -97,6 +97,7 @@ class TestResponse(unittest.TestCase):
     def test_all(self):
         els = self.response.all("div")
         assert len(els) == 2
+        assert isinstance(els, tuple)
 
     def test_has_text(self):
         assert self.response.has_text("This is foo")
