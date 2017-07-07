@@ -116,7 +116,7 @@ class Form(object):
     def __setitem__(self, key, value):
         css_path = "*[name='{}']".format(key)
         element = self.response.one(css_path)
-        element.value = value
+        element.value = str(value)
 
     def _submit_data(self):
         els = self.element.xpath(".//input")

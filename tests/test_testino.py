@@ -145,3 +145,7 @@ class TestForm(unittest.TestCase):
         expected_path = form.action
         page = form.submit()
         assert page.path == expected_path
+
+    def test_non_string_value(self):
+        form = self.response.get_form()
+        form['flibble'] = 1
