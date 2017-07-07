@@ -6,7 +6,7 @@ import nose
 import pyjade
 import requests_mock
 
-from testino import Response, XPath, WSGIAgent, BaseAgent
+from testino import Response, XPath, WSGIAgent, BaseAgent, MissingFieldError
 
 
 document = pyjade.simple_convert('''
@@ -149,3 +149,8 @@ class TestForm(unittest.TestCase):
     def test_non_string_value(self):
         form = self.response.get_form()
         form['flibble'] = 1
+
+    def test_missing_field(self):
+        form = self.response.get_form()
+        with nose.tools.assert_raises(MissingFieldError):
+            form['_xyz_'] = "foo"

@@ -9,6 +9,14 @@ from parsel.csstranslator import HTMLTranslator
 from werkzeug.http import parse_options_header
 
 
+class MissingFieldError(Exception):
+    def __init__(self, field_name):
+        self.field_name = field_name
+
+    def __repr__(self):
+        return "MissingFieldError: Field {} cannot be found".format(self.field_name)
+
+
 class XPath(str):
     pass
 
@@ -115,7 +123,10 @@ class Form(object):
 
     def __setitem__(self, key, value):
         css_path = "*[name='{}']".format(key)
-        element = self.response.one(css_path)
+        try:
+            element = self.response.one(css_path)
+        except AssertionError:
+            raise MissingFieldError(key)
         element.value = str(value)
 
     def _submit_data(self):
