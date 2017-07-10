@@ -6,7 +6,7 @@ import nose
 import pyjade
 import requests_mock
 
-from testino import Response, XPath, WSGIAgent, BaseAgent, MissingFieldError
+from testino import Response, XPath, WSGIAgent, BaseAgent, MissingFieldError, MissingFormError
 
 
 document = pyjade.simple_convert('''
@@ -119,6 +119,10 @@ class TestResponse(unittest.TestCase):
         self.response.click("#bumble")
         expected_calls = [unittest.mock.call.get('/bumble')]
         assert self.mock_agent.mock_calls == expected_calls
+
+    def test_missing_form(self):
+        with nose.tools.assert_raises(MissingFormError):
+            form = self.response.get_form()
 
 
 class TestForm(unittest.TestCase):

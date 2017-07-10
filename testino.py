@@ -17,6 +17,11 @@ class MissingFieldError(Exception):
         return "MissingFieldError: Field {} cannot be found".format(self.field_name)
 
 
+class MissingFormError(Exception):
+    def __repr__(self):
+        return "MissingFormError: No form found on the page"
+
+
 class XPath(str):
     pass
 
@@ -105,7 +110,11 @@ class Response(object):
         return self.agent.get(url)
 
     def get_form(self):
-        return Form(self, self.one("form"))
+        try:
+            form = self.one("form")
+        except AssertionError:
+            raise MissingFormError()
+        return Form(self, form)
 
 
 class Form(object):
