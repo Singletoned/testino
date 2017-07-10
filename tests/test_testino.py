@@ -121,8 +121,9 @@ class TestResponse(unittest.TestCase):
         assert self.mock_agent.mock_calls == expected_calls
 
     def test_missing_form(self):
-        with nose.tools.assert_raises(MissingFormError):
+        with nose.tools.assert_raises(MissingFormError) as e:
             form = self.response.get_form()
+        assert str(e.exception) == "MissingFormError: No form found on the page"
 
 
 class TestForm(unittest.TestCase):
@@ -156,5 +157,6 @@ class TestForm(unittest.TestCase):
 
     def test_missing_field(self):
         form = self.response.get_form()
-        with nose.tools.assert_raises(MissingFieldError):
+        with nose.tools.assert_raises(MissingFieldError) as e:
             form['_xyz_'] = "foo"
+        assert str(e.exception) == "MissingFieldError: Field _xyz_ cannot be found"

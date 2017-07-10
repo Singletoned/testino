@@ -13,12 +13,12 @@ class MissingFieldError(Exception):
     def __init__(self, field_name):
         self.field_name = field_name
 
-    def __repr__(self):
+    def __str__(self):
         return "MissingFieldError: Field {} cannot be found".format(self.field_name)
 
 
 class MissingFormError(Exception):
-    def __repr__(self):
+    def __str__(self):
         return "MissingFormError: No form found on the page"
 
 
