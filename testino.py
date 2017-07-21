@@ -22,6 +22,14 @@ class MissingFormError(Exception):
         return "MissingFormError: No form found on the page"
 
 
+class NotFound(Exception):
+    def __init__(self, response):
+        self.response = response
+
+    def __str__(self):
+        return "{} returned a 404".format(self.response)
+
+
 class XPath(str):
     pass
 
@@ -32,9 +40,12 @@ class BaseAgent(object):
         self.session = requests.Session()
         self.session.hooks = {'response': self.make_response}
 
-    def get(self, url, params=None):
+    def get(self, url, data=None):
         url = urllib.parse.urljoin(self.base_url, url)
-        return self.session.get(url, params=params)
+        response = self.session.get(url, params=data)
+        if response.status_code == 404:
+            raise NotFound(response)
+        return response
 
     def make_response(self, response, **kwargs):
         return Response(
@@ -115,6 +126,12 @@ class Response(object):
         except AssertionError:
             raise MissingFormError()
         return Form(self, form)
+
+    def follow(self):
+        assert 300 <= self.status_code < 400, self.status_code
+        location = self.headers['Location']
+        response = self.agent.get(location)
+        return response
 
 
 class Form(object):
