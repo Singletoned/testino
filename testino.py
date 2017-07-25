@@ -188,5 +188,5 @@ class Form(object):
     def submit(self):
         data = self.submit_data()
         func = getattr(self.response.agent, self.method.lower())
-        response = func(self.action, params=data)
+        response = func(self.action, data=data)
         return response
