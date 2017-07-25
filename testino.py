@@ -50,7 +50,7 @@ class BaseAgent(object):
 
     def get(self, url, data=None):
         url = urllib.parse.urljoin(self.base_url, url)
-        response = self.session.get(url, params=data)
+        response = self.session.get(url, params=data, allow_redirects=False)
         if response.status_code == 404:
             raise NotFound(response)
         return response

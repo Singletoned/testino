@@ -6,9 +6,19 @@ import nose.tools
 from testino import WSGIAgent, NotFound, MethodNotAllowed
 
 
-def test_follow():
+def test_follow_get():
+    agent = WSGIAgent(httpbin.app)
+    response = agent.get("/redirect-to?url=/get")
+    assert response.status_code == 302
+    response = response.follow()
+    assert response.status_code == 200
+    assert response.path == "/get"
+
+
+def test_follow_post():
     agent = WSGIAgent(httpbin.app)
     response = agent.post("/redirect-to?url=/get")
+    assert response.status_code == 302
     response = response.follow()
     assert response.status_code == 200
     assert response.path == "/get"
