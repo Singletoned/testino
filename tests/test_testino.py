@@ -55,12 +55,16 @@ class StubResponse(object):
         self.content = content
         self.url = "http://www.example.com/flibble"
         self.headers = {"Content-Type": "text/html; charset=utf-8"}
+        self.status_code = 999
 
 
 class TestResponse(unittest.TestCase):
     def setUp(self):
         self.mock_agent = unittest.mock.Mock()
         self.response = Response(StubResponse(document), agent=self.mock_agent)
+
+    def test_repr(self):
+        assert str(self.response) == "<Request 999 /flibble>"
 
     def test_path(self):
         path = self.response.path

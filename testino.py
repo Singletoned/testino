@@ -89,6 +89,9 @@ class Response(object):
     def __getattr__(self, key):
         return getattr(self.response, key)
 
+    def __repr__(self):
+        return "<Request {} {}>".format(self.status_code, self.path)
+
     @property
     def path(self):
         return urllib.parse.urlparse(self.url).path
