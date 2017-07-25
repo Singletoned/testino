@@ -30,6 +30,14 @@ class NotFound(Exception):
         return "{} returned a 404".format(self.response)
 
 
+class MethodNotAllowed(Exception):
+    def __init__(self, response):
+        self.response = response
+
+    def __str__(self):
+        return "{} returned a 405".format(self.response)
+
+
 class XPath(str):
     pass
 
@@ -45,6 +53,13 @@ class BaseAgent(object):
         response = self.session.get(url, params=data)
         if response.status_code == 404:
             raise NotFound(response)
+        return response
+
+    def post(self, url, data=None):
+        url = urllib.parse.urljoin(self.base_url, url)
+        response = self.session.post(url, data=data, allow_redirects=False)
+        if response.status_code == 405:
+            raise MethodNotAllowed(response)
         return response
 
     def make_response(self, response, **kwargs):
