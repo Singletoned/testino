@@ -53,7 +53,7 @@ def test_BaseAgent(mock_requests):
 class StubResponse(object):
     def __init__(self, content):
         self.content = content
-        self.url = "http://www.example.com/flibble"
+        self.url = "http://example.com/flibble"
         self.headers = {"Content-Type": "text/html; charset=utf-8"}
         self.status_code = 999
 
