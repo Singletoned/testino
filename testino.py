@@ -81,7 +81,10 @@ class Response(object):
     def __init__(self, response, agent):
         self.response = response
         self.agent = agent
-        self.lxml = lxml.html.fromstring(self.content)
+        if self.mime_type == "text/html" and self.content:
+            self.lxml = lxml.html.fromstring(self.content)
+        else:
+            self.lxml = None
 
     def __getattr__(self, key):
         return getattr(self.response, key)

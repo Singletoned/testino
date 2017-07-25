@@ -14,6 +14,12 @@ def test_follow():
     assert response.path == "/get"
 
 
+def test_non_html():
+    agent = WSGIAgent(httpbin.app)
+    response = agent.get("/robots.txt")
+    assert not response.lxml
+
+
 def test_404():
     agent = WSGIAgent(httpbin.app)
     with nose.tools.assert_raises(NotFound) as e:
