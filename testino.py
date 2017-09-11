@@ -187,7 +187,7 @@ class Form(object):
 
     def submit_data(self):
         data = self._submit_data()
-        data = dict((k,v) for (k,v) in data if k)
+        data = dict((k, v) for (k, v) in data if k)
         return data
 
     def submit(self):
