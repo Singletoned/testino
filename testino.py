@@ -179,10 +179,10 @@ class Form(object):
         element.value = str(value)
 
     def _submit_data(self):
-        els = self.element.xpath(".//input")
+        els = self.element.xpath(".//input|.//select")
         for el in els:
             name = el.attrib.get('name', '')
-            value = el.attrib.get('value', '')
+            value = el.value or ''
             yield (name, value)
 
     def submit_data(self):

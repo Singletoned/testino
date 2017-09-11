@@ -13,6 +13,10 @@ html
   body
     form(action="/result_page")
       input(name="flibble")
+      input(type="text", name="text_field")
+      select(name="select_field")
+        option(value="1") One
+        option(value="2") Two
 ''')
 
 
@@ -44,7 +48,10 @@ class TestForm(unittest.TestCase):
         form = self.response.get_form()
         form['flibble'] = "flamble"
         result = form.submit_data()
-        expected = {'flibble': "flamble"}
+        expected = {
+            'select_field': "",
+            'flibble': "flamble",
+            'text_field': ""}
         assert result == expected
 
     def test_submit(self):
@@ -67,3 +74,10 @@ class TestForm(unittest.TestCase):
 
     def test_set_radio(self):
         form = self.response.get_form()
+        form['select_field'] = "2"
+        result = form.submit_data()
+        expected = {
+            'select_field': "2",
+            'flibble': "",
+            'text_field': ""}
+        assert result == expected
