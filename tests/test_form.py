@@ -72,7 +72,7 @@ class TestForm(unittest.TestCase):
         expected_error = "MissingFieldError: Field _xyz_ cannot be found"
         assert str(e.exception) == expected_error
 
-    def test_set_radio(self):
+    def test_set_select(self):
         form = self.response.get_form()
         form['select_field'] = "2"
         result = form.submit_data()
