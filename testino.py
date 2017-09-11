@@ -195,3 +195,6 @@ class Form(object):
         func = getattr(self.response.agent, self.method.lower())
         response = func(self.action, data=data)
         return response
+
+    def to_string(self):
+        return lxml.html.tostring(self.element)
