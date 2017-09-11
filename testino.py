@@ -98,7 +98,9 @@ class Response(object):
 
     @property
     def mime_type(self):
-        return parse_options_header(self.headers['Content-Type'])[0]
+        content_type = self.headers.get('Content-Type')
+        if content_type:
+            return parse_options_header(content_type)[0]
 
     @property
     def charset(self):
