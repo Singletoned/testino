@@ -17,6 +17,8 @@ html
       select(name="select_field")
         option(value="1") One
         option(value="2") Two
+      input(type="radio", name="radio_field", value="a")
+      input(type="radio", name="radio_field", value="b")
 ''')
 
 
@@ -48,11 +50,7 @@ class TestForm(unittest.TestCase):
         form = self.response.get_form()
         form['flibble'] = "flamble"
         result = form.submit_data()
-        expected = {
-            'select_field': "",
-            'flibble': "flamble",
-            'text_field': ""}
-        assert result == expected
+        assert result['flibble'] == "flamble"
 
     def test_submit(self):
         form = self.response.get_form()
@@ -67,17 +65,19 @@ class TestForm(unittest.TestCase):
 
     def test_missing_field(self):
         form = self.response.get_form()
-        with nose.tools.assert_raises(MissingFieldError) as e:
+        with nose.tools.assert_raises(KeyError) as e:
             form['_xyz_'] = "foo"
-        expected_error = "MissingFieldError: Field _xyz_ cannot be found"
-        assert str(e.exception) == expected_error
+        assert "_xyz_" in str(e.exception)
 
     def test_set_select(self):
         form = self.response.get_form()
         form['select_field'] = "2"
         result = form.submit_data()
-        expected = {
-            'select_field': "2",
-            'flibble': "",
-            'text_field': ""}
-        assert result == expected
+        assert result['select_field'] == "2"
+
+    def test_set_radio(self):
+        form = self.response.get_form()
+        print(form.to_string())
+        form['radio_field'] = "b"
+        result = form.submit_data()
+        assert result['radio_field'] == "b"

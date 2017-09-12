@@ -171,11 +171,7 @@ class Form(object):
         return self.element.attrib.get('action')
 
     def __setitem__(self, key, value):
-        css_path = "*[name='{}']".format(key)
-        try:
-            element = self.response.one(css_path)
-        except AssertionError:
-            raise MissingFieldError(key)
+        element = self.element.inputs[key]
         element.value = str(value)
 
     def _submit_data(self):
