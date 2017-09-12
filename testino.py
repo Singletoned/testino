@@ -175,7 +175,7 @@ class Form(object):
         element.value = str(value)
 
     def _submit_data(self):
-        els = self.element.xpath(".//input|.//select")
+        els = self.element.inputs
         for el in els:
             name = el.attrib.get('name', '')
             value = el.value or ''
