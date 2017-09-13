@@ -171,20 +171,10 @@ class Form(object):
         return self.element.attrib.get('action')
 
     def __setitem__(self, key, value):
-        element = self.element.inputs[key]
-        element.value = str(value)
-
-    def _submit_data(self):
-        els = self.element.inputs
-        for el in els:
-            name = el.attrib.get('name', '')
-            value = el.value or ''
-            yield (name, value)
+        self.element.fields[key] = str(value)
 
     def submit_data(self):
-        data = self._submit_data()
-        data = dict((k, v) for (k, v) in data if k)
-        return data
+        return dict(self.element.form_values())
 
     def submit(self):
         data = self.submit_data()
