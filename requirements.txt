@@ -7,4 +7,3 @@ nose
 pyjade
 werkzeug
 requests-mock
-httpbin
