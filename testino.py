@@ -170,6 +170,9 @@ class Form(object):
     def action(self):
         return self.element.attrib.get('action')
 
+    def __getitem__(self, key):
+        return self.element.fields[key]
+
     def __setitem__(self, key, value):
         self.element.fields[key] = str(value)
 

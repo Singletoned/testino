@@ -45,6 +45,7 @@ class TestForm(unittest.TestCase):
         form = self.response.get_form()
         form['flibble'] = "flamble"
         assert self.response.has_one("input[value='flamble']")
+        assert form['flibble'] == "flamble"
 
     def test_submit_data(self):
         form = self.response.get_form()
