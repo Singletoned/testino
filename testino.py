@@ -144,7 +144,7 @@ class Response(object):
         return self.agent.get(url)
 
     def get_form(self, index=None):
-        if index:
+        if index is not None:
             form = self.all("form")[index]
         else:
             try:

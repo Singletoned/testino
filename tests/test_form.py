@@ -96,5 +96,7 @@ class TestForm(unittest.TestCase):
     def test_get_two_forms(self):
         response = Response(
             StubResponse(two_form_document), agent=self.agent)
-        form = response.get_form(index=1)
-        assert form.action == "/other_page"
+        form_0 = response.get_form(index=0)
+        assert form_0.action == "/result_page"
+        form_1 = response.get_form(index=1)
+        assert form_1.action == "/other_page"
