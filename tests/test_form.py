@@ -22,6 +22,16 @@ html
 ''')
 
 
+two_form_document = pyjade.simple_convert('''
+html
+  body
+    form(action="/result_page")
+      input(name="flibble")
+    form(action="/other_page")
+      input(name="other_flibble")
+''')
+
+
 def wsgi_app(env, start_response):
     start_response('200 OK', [('Content-Type', 'text/html')])
     return [b"This is a WSGI app"]
@@ -82,3 +92,9 @@ class TestForm(unittest.TestCase):
         form['radio_field'] = "b"
         result = form.submit_data()
         assert result['radio_field'] == "b"
+
+    def test_get_two_forms(self):
+        response = Response(
+            StubResponse(two_form_document), agent=self.agent)
+        form = response.get_form(index=1)
+        assert form.action == "/other_page"

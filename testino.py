@@ -143,11 +143,14 @@ class Response(object):
         url = els.attrib['href']
         return self.agent.get(url)
 
-    def get_form(self):
-        try:
-            form = self.one("form")
-        except AssertionError:
-            raise MissingFormError()
+    def get_form(self, index=None):
+        if index:
+            form = self.all("form")[index]
+        else:
+            try:
+                form = self.one("form")
+            except AssertionError:
+                raise MissingFormError()
         return Form(self, form)
 
     def follow(self):
