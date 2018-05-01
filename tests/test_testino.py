@@ -8,8 +8,8 @@ import requests_mock
 
 from testino import Response, XPath, WSGIAgent, BaseAgent, MissingFieldError, MissingFormError
 
-
-document = pyjade.simple_convert('''
+document = pyjade.simple_convert(
+    '''
 html
   body
     div#foo
@@ -20,15 +20,17 @@ html
       button Bumble
     a#famble(href="/famble")
       button Famble
-''')
+'''
+)
 
-
-form_document = pyjade.simple_convert('''
+form_document = pyjade.simple_convert(
+    '''
 html
   body
     form(action="/result_page")
       input(name="flibble")
-''')
+'''
+)
 
 
 def wsgi_app(env, start_response):
@@ -69,7 +71,9 @@ class StubResponse(object):
 class TestResponse(unittest.TestCase):
     def setUp(self):
         self.mock_agent = unittest.mock.Mock()
-        self.response = Response(StubResponse(document), agent=self.mock_agent)
+        self.response = Response(
+            StubResponse(document), agent=self.mock_agent
+        )
 
     def test_repr(self):
         assert str(self.response) == "<Request 999 /flibble>"

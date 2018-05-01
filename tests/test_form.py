@@ -5,7 +5,7 @@ import unittest.mock
 import nose
 import pyjade
 
-from testino import Response, WSGIAgent, MissingFieldError
+from testino import Response, WSGIAgent
 
 
 form_document = pyjade.simple_convert('''

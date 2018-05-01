@@ -14,7 +14,9 @@ class MissingFieldError(Exception):
         self.field_name = field_name
 
     def __str__(self):
-        return "MissingFieldError: Field {} cannot be found".format(self.field_name)
+        return "MissingFieldError: Field {} cannot be found".format(
+            self.field_name
+        )
 
 
 class MissingFormError(Exception):
@@ -67,18 +69,14 @@ class BaseAgent(object):
         return response
 
     def make_response(self, response, **kwargs):
-        return Response(
-            response=response,
-            agent=self)
+        return Response(response=response, agent=self)
 
 
 class WSGIAgent(BaseAgent):
     def __init__(self, wsgi_app, base_url="http://example.com/"):
         super(WSGIAgent, self).__init__(base_url)
         self.app = wsgi_app
-        self.session.mount(
-            self.base_url,
-            wsgiadapter.WSGIAdapter(self.app))
+        self.session.mount(self.base_url, wsgiadapter.WSGIAdapter(self.app))
 
 
 class Response(object):
@@ -108,8 +106,9 @@ class Response(object):
 
     @property
     def charset(self):
-        return parse_options_header(
-            self.headers['Content-Type'])[1].get('charset', "")
+        return parse_options_header(self.headers['Content-Type'])[1].get(
+            'charset', ""
+        )
 
     def to_string(self):
         return lxml.html.tostring(self.lxml)
