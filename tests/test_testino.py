@@ -50,6 +50,14 @@ def test_BaseAgent(mock_requests):
     assert response.content == b"This is not a WSGI app"
 
 
+@requests_mock.mock()
+def test_headers(mock_requests):
+    mock_requests.get("http://example.com/foo", text='This is not a WSGI app')
+    agent = BaseAgent("http://example.com")
+    agent.get("/foo", headers={"Foo": "Bar"})
+    assert mock_requests.request_history[0].headers['Foo'] == 'Bar'
+
+
 class StubResponse(object):
     def __init__(self, content):
         self.content = content

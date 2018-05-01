@@ -48,16 +48,20 @@ class BaseAgent(object):
         self.session = requests.Session()
         self.session.hooks = {'response': self.make_response}
 
-    def get(self, url, data=None):
+    def get(self, url, data=None, **kwargs):
         url = urllib.parse.urljoin(self.base_url, url)
-        response = self.session.get(url, params=data, allow_redirects=False)
+        response = self.session.get(
+            url, params=data, allow_redirects=False, **kwargs
+        )
         if response.status_code == 404:
             raise NotFound(response)
         return response
 
-    def post(self, url, data=None):
+    def post(self, url, data=None, **kwargs):
         url = urllib.parse.urljoin(self.base_url, url)
-        response = self.session.post(url, data=data, allow_redirects=False)
+        response = self.session.post(
+            url, data=data, allow_redirects=False, **kwargs
+        )
         if response.status_code == 405:
             raise MethodNotAllowed(response)
         return response
