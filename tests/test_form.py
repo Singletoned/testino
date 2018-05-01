@@ -11,7 +11,7 @@ from testino import Response, WSGIAgent, MissingFieldError
 form_document = pyjade.simple_convert('''
 html
   body
-    form(action="/result_page")
+    form(action="./result_page")
       input(name="flibble")
       input(type="text", name="text_field")
       select(name="select_field")
@@ -40,7 +40,7 @@ def wsgi_app(env, start_response):
 class StubResponse(object):
     def __init__(self, content):
         self.content = content
-        self.url = "http://example.com/flibble"
+        self.url = "http://example.com/flibble/"
         self.headers = {"Content-Type": "text/html; charset=utf-8"}
         self.status_code = 999
 
@@ -66,7 +66,7 @@ class TestForm(unittest.TestCase):
     def test_submit(self):
         form = self.response.get_form()
         form['flibble'] = "flamble"
-        expected_path = form.action
+        expected_path = "/flibble/result_page"
         page = form.submit()
         assert page.path == expected_path
 
