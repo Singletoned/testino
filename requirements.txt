@@ -7,3 +7,5 @@ nose
 pyjade
 werkzeug
 requests-mock
+
+-e git+https://github.com/Singletoned/httpbin.git#egg=httpbin
