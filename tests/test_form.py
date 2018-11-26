@@ -20,6 +20,7 @@ html
       input(type="radio", name="radio_field", value="a")
       input(type="radio", name="radio_field", value="b")
       input(type="submit", name="submit_field", value="Submit")
+      input(type="submit", value="Submit")
 ''')
 
 
