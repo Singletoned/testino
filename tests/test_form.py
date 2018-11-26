@@ -19,6 +19,7 @@ html
         option(value="2") Two
       input(type="radio", name="radio_field", value="a")
       input(type="radio", name="radio_field", value="b")
+      input(type="submit", name="submit_field", value="Submit")
 ''')
 
 
@@ -62,6 +63,7 @@ class TestForm(unittest.TestCase):
         form['flibble'] = "flamble"
         result = form.submit_data()
         assert result['flibble'] == "flamble"
+        assert result['submit_field'] == "Submit"
 
     def test_submit(self):
         form = self.response.get_form()
