@@ -185,7 +185,6 @@ class Form(object):
     def submit_data(self):
         data = dict(self.element.form_values())
         for field in self.element.inputs:
-            print(field.attrib)
             if field.attrib.get('type') == 'submit':
                 data[field.attrib['name']] = field.value
         return data
