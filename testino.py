@@ -5,6 +5,7 @@ import urllib.parse
 import requests
 import wsgiadapter
 import lxml.html
+from lxml.html import builder as E
 from parsel.csstranslator import HTMLTranslator
 from werkzeug.http import parse_options_header
 
@@ -181,6 +182,14 @@ class Form(object):
 
     def __setitem__(self, key, value):
         self.element.fields[key] = str(value)
+
+    def select(self, field_name, value, force=False):
+        field = self.element.cssselect('''select[name={}]'''.format(field_name))[0]
+        if not value in field.value_options:
+            field.append(
+                E.OPTION(value=str(value))
+            )
+        self[field_name] = value
 
     def submit_data(self):
         data = dict(self.element.form_values())

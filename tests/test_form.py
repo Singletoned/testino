@@ -89,6 +89,12 @@ class TestForm(unittest.TestCase):
         result = form.submit_data()
         assert result['select_field'] == "2"
 
+    def test_set_select_force(self):
+        form = self.response.get_form()
+        form.select("select_field", "3", force=True)
+        result = form.submit_data()
+        assert result['select_field'] == "3"
+
     def test_set_radio(self):
         form = self.response.get_form()
         print(form.to_string())
