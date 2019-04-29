@@ -198,8 +198,9 @@ class Form(object):
                 data[field.attrib['name']] = field.value
         return data
 
-    def submit(self):
-        data = self.submit_data()
+    def submit(self, data=None):
+        if data is None:
+            data = self.submit_data()
         action = urllib.parse.urljoin(self.response.url, self.action)
         func = getattr(self.response.agent, self.method.lower())
         response = func(action, data=data)
