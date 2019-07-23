@@ -19,6 +19,10 @@ html
         option(value="2") Two
       input(type="radio", name="radio_field", value="a")
       input(type="radio", name="radio_field", value="b")
+      input#checkbox_field_a(type="checkbox", name="checkbox_field_a", value="a")
+      label(for="checkbox_field_a") Checkbox Field A
+      label Checkbox Field B
+        input(type="checkbox", name="checkbox_field_b", value="b", checked)
       input(type="submit", name="submit_field", value="Submit")
       input(type="submit", value="Submit")
 ''')
@@ -101,6 +105,20 @@ class TestForm(unittest.TestCase):
         form['radio_field'] = "b"
         result = form.submit_data()
         assert result['radio_field'] == "b"
+
+    def test_check(self):
+        response = Response(
+            StubResponse(form_document), agent=self.agent)
+        form = response.get_form()
+        result = form.submit_data()
+        assert result.get('checkbox_field_a', False) is False
+        assert result['checkbox_field_b'] == 'b'
+        form = self.response.get_form()
+        form.check("Checkbox Field A")
+        form.check("Checkbox Field B")
+        result = form.submit_data()
+        assert result['checkbox_field_a'] == 'a'
+        assert result.get('checkbox_field_b', False) is False
 
     def test_get_two_forms(self):
         response = Response(

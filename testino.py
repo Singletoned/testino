@@ -183,6 +183,17 @@ class Form(object):
     def __setitem__(self, key, value):
         self.element.fields[key] = str(value)
 
+    def check(self, label):
+        selector = "label:contains({})".format(repr(label))
+        label_els = self.element.cssselect(selector)
+        assert len(label_els) == 1
+        label_el = label_els[0]
+        if label_el.for_element is not None:
+            el = label_el.for_element
+        else:
+            el = label_el.cssselect("input")[0]
+        el.checked = not el.checked
+
     def select(self, field_name, value, force=False):
         field = self.element.cssselect('''select[name={}]'''.format(field_name))[0]
         if not value in field.value_options:
