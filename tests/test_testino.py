@@ -27,10 +27,11 @@ form_document = pyjade.simple_convert(
     '''
 html
   body
-    form(action="/result_page")
-      input(name="flibble")
-'''
-)
+    form#one(action="/result_page_1")
+      input(name="flibble_1")
+    form#two(action="/result_page_2")
+      input(name="flibble_2")
+''')
 
 
 def wsgi_app(env, start_response):
@@ -136,8 +137,27 @@ class TestResponse(unittest.TestCase):
         expected_calls = [unittest.mock.call.get('/bumble')]
         assert self.mock_agent.mock_calls == expected_calls
 
-    def test_missing_form(self):
-        with nose.tools.assert_raises(MissingFormError) as e:
+    def test_click_no_links(self):
+        with nose.tools.assert_raises(AssertionError) as e:
+            self.response.click(contains="FlubNuts")
+        expected_error = "No matching links"
+        assert str(e.exception) == expected_error, e.exception
+
+    def test_click_too_many_links(self):
+        with nose.tools.assert_raises(AssertionError) as e:
+            self.response.click(contains="ble")
+        expected_error = "Too many matching links"
+        assert str(e.exception) == expected_error, e.exception
+
+    def test_get_form_no_form(self):
+        with nose.tools.assert_raises(AssertionError) as e:
             self.response.get_form()
-        expected_error = "MissingFormError: No form found on the page"
-        assert str(e.exception) == expected_error
+        expected_error = "No matching forms"
+        assert str(e.exception) == expected_error, e.exception
+
+    def test_get_from_too_many_forms(self):
+        response = Response(StubResponse(form_document), agent=self.mock_agent)
+        with nose.tools.assert_raises(AssertionError) as e:
+            response.get_form()
+        expected_error = "Too many matching forms"
+        assert str(e.exception) == expected_error, e.exception

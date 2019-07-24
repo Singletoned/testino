@@ -140,22 +140,23 @@ class Response(object):
     def click(self, selector=None, contains=None, index=None):
         if contains:
             selector = "a:contains('{}')".format(contains)
+        els = self.all(selector)
         if index is None:
-            els = self.one(selector)
-        else:
-            els = self.all(selector)[index]
-        url = els.attrib['href']
+            assert len(els) > 0, "No matching links"
+            assert len(els) < 2, "Too many matching links"
+            index = 0
+        el = els[index]
+        url = el.attrib['href']
         return self.agent.get(url)
 
     def get_form(self, index=None):
-        if index is not None:
-            form = self.all("form")[index]
-        else:
-            try:
-                form = self.one("form")
-            except AssertionError:
-                raise MissingFormError()
-        return Form(self, form)
+        els = self.all("form")
+        if index is None:
+            assert len(els) > 0, "No matching forms"
+            assert len(els) < 2, "Too many matching forms"
+            index = 0
+        el = els[index]
+        return Form(self, el)
 
     def follow(self):
         assert 300 <= self.status_code < 400, self.status_code
