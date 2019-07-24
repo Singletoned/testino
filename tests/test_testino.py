@@ -20,8 +20,7 @@ html
       button Bumble
     a#famble(href="/famble")
       button Famble
-'''
-)
+''')
 
 form_document = pyjade.simple_convert(
     '''
@@ -73,8 +72,7 @@ class TestResponse(unittest.TestCase):
     def setUp(self):
         self.mock_agent = unittest.mock.Mock()
         self.response = Response(
-            StubResponse(document), agent=self.mock_agent
-        )
+            StubResponse(document), agent=self.mock_agent)
 
     def test_repr(self):
         assert str(self.response) == "<Request 999 /flibble>"
