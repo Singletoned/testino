@@ -101,7 +101,6 @@ class TestForm(unittest.TestCase):
 
     def test_set_radio(self):
         form = self.response.get_form()
-        print(form.to_string())
         form['radio_field'] = "b"
         result = form.submit_data()
         assert result['radio_field'] == "b"
