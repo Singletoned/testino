@@ -151,8 +151,8 @@ class Response(object):
         url = el.attrib['href']
         return self.agent.get(url)
 
-    def get_form(self, index=None):
-        els = self.all("form")
+    def get_form(self, selector="form", index=None):
+        els = self.all(selector)
         if index is None:
             assert len(els) > 0, "No matching forms"
             assert len(els) < 2, "Too many matching forms"
