@@ -105,6 +105,19 @@ class TestForm(unittest.TestCase):
         result = form.submit_data()
         assert result['radio_field'] == "b"
 
+    def test_set(self):
+        form = self.response.get_form()
+        form.set("flibble", "new_value")
+        result = form.submit_data()
+        print(result)
+        assert result['flibble'] == "new_value"
+
+    def test_set_unkown(self):
+        form = self.response.get_form()
+        form.set("unknown_field", "new_value")
+        result = form.submit_data()
+        assert result['unknown_field'] == "new_value"
+
     def test_check(self):
         response = Response(
             StubResponse(form_document), agent=self.agent)

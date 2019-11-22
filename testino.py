@@ -205,6 +205,14 @@ class Form(object):
             )
         self[field_name] = value
 
+    def set(self, field_name, value):
+        if field_name in self.element.fields:
+            self[field_name] = value
+        else:
+            self.element.append(
+                E.INPUT(type="hidden", name=field_name, value=str(value))
+            )
+
     def submit_data(self):
         data = dict(self.element.form_values())
         for field in self.element.inputs:
