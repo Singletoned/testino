@@ -111,8 +111,10 @@ class Response(object):
             'charset', ""
         )
 
-    def to_string(self):
-        return lxml.html.tostring(self.lxml)
+    def to_string(self, charset=None):
+        if not charset:
+            charset = self.charset
+        return lxml.html.tostring(self.lxml).decode(charset)
 
     def one(self, selector):
         if not isinstance(selector, XPath):
@@ -220,5 +222,10 @@ class Form(object):
         response = func(action, data=data)
         return response
 
-    def to_string(self):
-        return lxml.html.tostring(self.element)
+    def to_string(self, charset=None):
+        if not charset:
+            charset = self.response.charset
+        if self.element:
+            return lxml.html.tostring(self.element).decode('ascii')
+        else:
+            return None
