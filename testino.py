@@ -184,7 +184,9 @@ class Form(object):
         return self.element.fields[key]
 
     def __setitem__(self, key, value):
-        self.element.fields[key] = str(value)
+        if isinstance(value, int):
+            value = str(value)
+        self.element.fields[key] = value
 
     def check(self, label):
         selector = "label:contains({})".format(repr(label))
