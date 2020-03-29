@@ -2,8 +2,10 @@
 
 import urllib.parse
 import difflib
+import asyncio
 
 import requests
+import httpx
 import wsgiadapter
 import lxml.html
 from lxml.html import builder as E
@@ -100,6 +102,25 @@ class WSGIAgent(BaseAgent):
         super(WSGIAgent, self).__init__(base_url)
         self.app = wsgi_app
         self.session.mount(self.base_url, wsgiadapter.WSGIAdapter(self.app))
+
+
+def _sync(coroutine):
+    return asyncio.get_event_loop().run_until_complete(coroutine)
+
+
+class ASGIAgent():
+    def __init__(self, app, base_url="http://example.com/"):
+        self.client = httpx.AsyncClient(app=app)
+        self.base_url = base_url
+
+    def __getattr__(self, attr):
+        response = getattr(self.client, attr)
+        return response
+
+    def get(self, url, *args, **kwargs):
+        url = urllib.parse.urljoin(self.base_url, url)
+        response = _sync(self.client.get(url, *args, **kwargs))
+        return Response(response=response, agent=self)
 
 
 class Response(object):
