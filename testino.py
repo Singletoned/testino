@@ -43,7 +43,12 @@ class MethodNotAllowed(Exception):
 
 
 def print_quick_pprint_diff(item1, item2):
-    for line in list(difflib.unified_diff(item1.split('\n'), item2.split('\n'))):
+    if isinstance(item1, bytes):
+        item1 = item1.decode("utf-8")
+    if isinstance(item2, bytes):
+        item2 = item2.decode("utf-8")
+    diff = difflib.unified_diff(item1.split('\n'), item2.split('\n'))
+    for line in list(diff):
         print(line)
 
 
