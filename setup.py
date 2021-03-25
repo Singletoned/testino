@@ -2,7 +2,7 @@ from setuptools import setup
 
 data = dict(
     name='testino',
-    version='0.3.10',
+    version='0.3.11',
     description="Test WSGI applications using lxml",
     long_description="",
     classifiers=[
