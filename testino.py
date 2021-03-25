@@ -1,16 +1,15 @@
 # -*- coding: utf-8 -*-
 
 import urllib.parse
+import difflib
 
 import requests
 import wsgiadapter
 import lxml.html
-from lxml.html import HTMLParser
 from lxml.html import builder as E
 from parsel.csstranslator import HTMLTranslator
 from werkzeug.http import parse_options_header
 
-html_parser = HTMLParser(recover=False)
 
 class MissingFieldError(Exception):
     def __init__(self, field_name):
@@ -43,8 +42,19 @@ class MethodNotAllowed(Exception):
         return "{} returned a 405".format(self.response)
 
 
+def print_quick_pprint_diff(item1, item2):
+    for line in list(difflib.unified_diff(item1.split('\n'), item2.split('\n'))):
+        print(line)
+
+
 def parse_html(html):
-    result = lxml.html.fromstring(html, parser=html_parser)
+    result = lxml.html.fromstring(html)
+    output = lxml.html.tostring(result).decode("utf-8")
+    try:
+        assert output.strip() == html.strip()
+    except AssertionError:
+        print_quick_pprint_diff(html, output)
+        raise
     return result
 
 
