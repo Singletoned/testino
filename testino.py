@@ -5,10 +5,12 @@ import urllib.parse
 import requests
 import wsgiadapter
 import lxml.html
+from lxml.html import HTMLParser
 from lxml.html import builder as E
 from parsel.csstranslator import HTMLTranslator
 from werkzeug.http import parse_options_header
 
+html_parser = HTMLParser(recover=False)
 
 class MissingFieldError(Exception):
     def __init__(self, field_name):
@@ -39,6 +41,11 @@ class MethodNotAllowed(Exception):
 
     def __str__(self):
         return "{} returned a 405".format(self.response)
+
+
+def parse_html(html):
+    result = lxml.html.fromstring(html, parser=html_parser)
+    return result
 
 
 class XPath(str):
@@ -85,7 +92,7 @@ class Response(object):
         self.response = response
         self.agent = agent
         if self.mime_type == "text/html" and self.content:
-            self.lxml = lxml.html.fromstring(self.content)
+            self.lxml = parse_html(self.content)
         else:
             self.lxml = None
 
