@@ -71,6 +71,7 @@ class StubResponse(object):
 class TestResponse(unittest.TestCase):
     def setUp(self):
         self.mock_agent = unittest.mock.Mock()
+        self.mock_agent.strict = False
         self.response = Response(
             StubResponse(document), agent=self.mock_agent)
 
