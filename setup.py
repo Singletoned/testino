@@ -2,8 +2,8 @@ from setuptools import setup
 
 data = dict(
     name='testino',
-    version='0.3.11',
-    description="Test WSGI applications using lxml",
+    version='0.3.12',
+    description="Test ASGI/WSGI applications using lxml",
     long_description="",
     classifiers=[
         'Development Status :: 4 - Beta',
