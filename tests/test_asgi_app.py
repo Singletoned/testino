@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import fastapi
-import nose.tools
-
 from testino import ASGIAgent
 
 
@@ -20,5 +17,3 @@ def test_get():
     agent = ASGIAgent(app)
     response = agent.get("/users/foo")
     assert response.json() == {'user_id': "foo"}
-
-
