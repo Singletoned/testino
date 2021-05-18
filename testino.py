@@ -54,14 +54,15 @@ def print_quick_pprint_diff(item1, item2):
         print(line)
 
 
-def parse_html(html):
+def parse_html(html, strict=False):
     result = lxml.html.fromstring(html)
-    output = lxml.html.tostring(result).decode("utf-8")
-    try:
-        assert output.strip() == html.strip()
-    except AssertionError:
-        print_quick_pprint_diff(html, output)
-        raise
+    if strict:
+        output = lxml.html.tostring(result).decode("utf-8")
+        try:
+            assert output.strip() == html.strip()
+        except AssertionError:
+            print_quick_pprint_diff(html, output)
+            raise
     return result
 
 
@@ -98,10 +99,11 @@ class BaseAgent(object):
 
 
 class WSGIAgent(BaseAgent):
-    def __init__(self, wsgi_app, base_url="http://example.com/"):
+    def __init__(self, wsgi_app, base_url="http://example.com/", strict=False):
         super(WSGIAgent, self).__init__(base_url)
         self.app = wsgi_app
         self.session.mount(self.base_url, wsgiadapter.WSGIAdapter(self.app))
+        self.strict = strict
 
 
 def _sync(coroutine):
@@ -127,8 +129,9 @@ class Response(object):
     def __init__(self, response, agent):
         self.response = response
         self.agent = agent
+        self.strict = getattr(agent, 'strict', False)
         if self.mime_type == "text/html" and self.content:
-            self.lxml = parse_html(self.content)
+            self.lxml = parse_html(self.content, strict=self.strict)
         else:
             self.lxml = None
 
