@@ -1,0 +1,7 @@
+nose
+pyjade
+werkzeug
+requests-mock
+fastapi
+
+-e git+https://github.com/Singletoned/httpbin.git#egg=httpbin

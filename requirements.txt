@@ -3,11 +3,5 @@ cssselect
 parsel
 requests
 requests-wsgi-adapter
-nose
-pyjade
-werkzeug
-requests-mock
 httpx
-fastapi
 
--e git+https://github.com/Singletoned/httpbin.git#egg=httpbin
