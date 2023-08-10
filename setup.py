@@ -1,24 +1,24 @@
 from setuptools import setup
 
 data = dict(
-    name='testino',
-    version='0.3.12',
+    name="testino",
+    version="0.3.12",
     description="Test ASGI/WSGI applications using lxml",
     long_description="",
     classifiers=[
-        'Development Status :: 4 - Beta',
-        'Environment :: Web Environment',
-        'Intended Audience :: Developers',
-        'License :: OSI Approved :: MIT License',
-        'Topic :: Internet :: WWW/HTTP :: WSGI',
-        'Topic :: Software Development :: Testing',
+        "Development Status :: 4 - Beta",
+        "Environment :: Web Environment",
+        "Intended Audience :: Developers",
+        "License :: OSI Approved :: MIT License",
+        "Topic :: Internet :: WWW/HTTP :: WSGI",
+        "Topic :: Software Development :: Testing",
     ],
-    keywords='',
-    author='Ed Singleton',
-    author_email='singletoned@gmail.com',
-    url='https://github.com/Singletoned/testino',
-    license='BSD',
-    py_modules=['testino'],
+    keywords="",
+    author="Ed Singleton",
+    author_email="singletoned@gmail.com",
+    url="https://github.com/Singletoned/testino",
+    license="BSD",
+    py_modules=["testino"],
     include_package_data=True,
     zip_safe=False,
     install_requires=[
@@ -34,5 +34,5 @@ data = dict(
     """,
 )
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     setup(**data)

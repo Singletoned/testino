@@ -6,10 +6,17 @@ import nose
 import pyjade
 import requests_mock
 
-from testino import Response, XPath, WSGIAgent, BaseAgent, MissingFieldError, MissingFormError
+from testino import (
+    BaseAgent,
+    MissingFieldError,
+    MissingFormError,
+    Response,
+    WSGIAgent,
+    XPath,
+)
 
 document = pyjade.simple_convert(
-    '''
+    """
 html
   body
     div#foo
@@ -20,21 +27,23 @@ html
       button Bumble
     a#famble(href="/famble")
       button Famble
-''')
+"""
+)
 
 form_document = pyjade.simple_convert(
-    '''
+    """
 html
   body
     form#one(action="/result_page_1")
       input(name="flibble_1")
     form#two(action="/result_page_2")
       input(name="flibble_2")
-''')
+"""
+)
 
 
 def wsgi_app(env, start_response):
-    start_response('200 OK', [('Content-Type', 'text/html')])
+    start_response("200 OK", [("Content-Type", "text/html")])
     return [b"This is a WSGI app"]
 
 
@@ -46,7 +55,7 @@ def test_WSGIAgent():
 
 @requests_mock.mock()
 def test_BaseAgent(mock_requests):
-    mock_requests.get("http://example.com/foo", text='This is not a WSGI app')
+    mock_requests.get("http://example.com/foo", text="This is not a WSGI app")
     agent = BaseAgent("http://example.com")
     response = agent.get("/foo")
     assert response.content == b"This is not a WSGI app"
@@ -54,10 +63,10 @@ def test_BaseAgent(mock_requests):
 
 @requests_mock.mock()
 def test_headers(mock_requests):
-    mock_requests.get("http://example.com/foo", text='This is not a WSGI app')
+    mock_requests.get("http://example.com/foo", text="This is not a WSGI app")
     agent = BaseAgent("http://example.com")
     agent.get("/foo", headers={"Foo": "Bar"})
-    assert mock_requests.request_history[0].headers['Foo'] == 'Bar'
+    assert mock_requests.request_history[0].headers["Foo"] == "Bar"
 
 
 class StubResponse(object):
@@ -72,8 +81,7 @@ class TestResponse(unittest.TestCase):
     def setUp(self):
         self.mock_agent = unittest.mock.Mock()
         self.mock_agent.strict = False
-        self.response = Response(
-            StubResponse(document), agent=self.mock_agent)
+        self.response = Response(StubResponse(document), agent=self.mock_agent)
 
     def test_repr(self):
         assert str(self.response) == "<Request 999 /flibble>"
@@ -126,17 +134,17 @@ class TestResponse(unittest.TestCase):
 
     def test_click_contains(self):
         self.response.click(contains="Bumble")
-        expected_calls = [unittest.mock.call.get('/bumble')]
+        expected_calls = [unittest.mock.call.get("/bumble")]
         assert self.mock_agent.mock_calls == expected_calls
 
     def test_click_contains_index(self):
         self.response.click(contains="ble", index=1)
-        expected_calls = [unittest.mock.call.get('/famble')]
+        expected_calls = [unittest.mock.call.get("/famble")]
         assert self.mock_agent.mock_calls == expected_calls
 
     def test_click_id(self):
         self.response.click("#bumble")
-        expected_calls = [unittest.mock.call.get('/bumble')]
+        expected_calls = [unittest.mock.call.get("/bumble")]
         assert self.mock_agent.mock_calls == expected_calls
 
     def test_click_no_links(self):

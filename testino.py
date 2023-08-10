@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
-import urllib.parse
-import difflib
 import asyncio
+import difflib
+import urllib.parse
 
-import requests
 import httpx
-import wsgiadapter
 import lxml.html
+import requests
+import wsgiadapter
 from lxml.html import builder as E
 from parsel.csstranslator import HTMLTranslator
 from werkzeug.http import parse_options_header
@@ -18,9 +18,7 @@ class MissingFieldError(Exception):
         self.field_name = field_name
 
     def __str__(self):
-        return "MissingFieldError: Field {} cannot be found".format(
-            self.field_name
-        )
+        return "MissingFieldError: Field {} cannot be found".format(self.field_name)
 
 
 class MissingFormError(Exception):
@@ -49,7 +47,7 @@ def print_quick_pprint_diff(item1, item2):
         item1 = item1.decode("utf-8")
     if isinstance(item2, bytes):
         item2 = item2.decode("utf-8")
-    diff = difflib.unified_diff(item1.split('\n'), item2.split('\n'))
+    diff = difflib.unified_diff(item1.split("\n"), item2.split("\n"))
     for line in list(diff):
         print(line)
 
@@ -74,22 +72,18 @@ class BaseAgent(object):
     def __init__(self, base_url):
         self.base_url = base_url
         self.session = requests.Session()
-        self.session.hooks = {'response': self.make_response}
+        self.session.hooks = {"response": self.make_response}
 
     def get(self, url, data=None, **kwargs):
         url = urllib.parse.urljoin(self.base_url, url)
-        response = self.session.get(
-            url, params=data, allow_redirects=False, **kwargs
-        )
+        response = self.session.get(url, params=data, allow_redirects=False, **kwargs)
         if response.status_code == 404:
             raise NotFound(response)
         return response
 
     def post(self, url, data=None, **kwargs):
         url = urllib.parse.urljoin(self.base_url, url)
-        response = self.session.post(
-            url, data=data, allow_redirects=False, **kwargs
-        )
+        response = self.session.post(url, data=data, allow_redirects=False, **kwargs)
         if response.status_code == 405:
             raise MethodNotAllowed(response)
         return response
@@ -110,7 +104,7 @@ def _sync(coroutine):
     return asyncio.get_event_loop().run_until_complete(coroutine)
 
 
-class ASGIAgent():
+class ASGIAgent:
     def __init__(self, app, base_url="http://example.com/"):
         self.client = httpx.AsyncClient(app=app)
         self.base_url = base_url
@@ -129,7 +123,7 @@ class Response(object):
     def __init__(self, response, agent):
         self.response = response
         self.agent = agent
-        self.strict = getattr(agent, 'strict', False)
+        self.strict = getattr(agent, "strict", False)
         if self.mime_type == "text/html" and self.content:
             self.lxml = parse_html(self.content, strict=self.strict)
         else:
@@ -147,15 +141,13 @@ class Response(object):
 
     @property
     def mime_type(self):
-        content_type = self.headers.get('Content-Type')
+        content_type = self.headers.get("Content-Type")
         if content_type:
             return parse_options_header(content_type)[0]
 
     @property
     def charset(self):
-        return parse_options_header(self.headers['Content-Type'])[1].get(
-            'charset', ""
-        )
+        return parse_options_header(self.headers["Content-Type"])[1].get("charset", "")
 
     def to_string(self, charset=None):
         if not charset:
@@ -195,7 +187,7 @@ class Response(object):
             assert len(els) < 2, "Too many matching links"
             index = 0
         el = els[index]
-        url = el.attrib['href']
+        url = el.attrib["href"]
         return self.agent.get(url)
 
     def get_form(self, selector="form", index=None):
@@ -209,7 +201,7 @@ class Response(object):
 
     def follow(self):
         assert 300 <= self.status_code < 400, self.status_code
-        location = self.headers['Location']
+        location = self.headers["Location"]
         response = self.agent.get(location)
         return response
 
@@ -221,11 +213,11 @@ class Form(object):
 
     @property
     def method(self):
-        return self.element.attrib.get('method', 'GET').upper()
+        return self.element.attrib.get("method", "GET").upper()
 
     @property
     def action(self):
-        return self.element.attrib.get('action')
+        return self.element.attrib.get("action")
 
     def __getitem__(self, key):
         return self.element.fields[key]
@@ -247,26 +239,22 @@ class Form(object):
         el.checked = not el.checked
 
     def select(self, field_name, value, force=False):
-        field = self.element.cssselect('''select[name={}]'''.format(field_name))[0]
+        field = self.element.cssselect("""select[name={}]""".format(field_name))[0]
         if not value in field.value_options:
-            field.append(
-                E.OPTION(value=str(value))
-            )
+            field.append(E.OPTION(value=str(value)))
         self[field_name] = value
 
     def set(self, field_name, value):
         if field_name in self.element.fields:
             self[field_name] = value
         else:
-            self.element.append(
-                E.INPUT(type="hidden", name=field_name, value=str(value))
-            )
+            self.element.append(E.INPUT(type="hidden", name=field_name, value=str(value)))
 
     def submit_data(self):
         data = dict(self.element.form_values())
         for field in self.element.inputs:
-            if (field.attrib.get('type') == 'submit') and field.attrib.get('name'):
-                data[field.attrib['name']] = field.value
+            if (field.attrib.get("type") == "submit") and field.attrib.get("name"):
+                data[field.attrib["name"]] = field.value
         return data
 
     def submit(self, data=None, extra=None):
@@ -283,6 +271,6 @@ class Form(object):
         if not charset:
             charset = self.response.charset
         if self.element:
-            return lxml.html.tostring(self.element).decode('ascii')
+            return lxml.html.tostring(self.element).decode("ascii")
         else:
             return None
