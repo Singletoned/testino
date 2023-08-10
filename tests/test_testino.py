@@ -110,6 +110,9 @@ class TestResponse(unittest.TestCase):
     def test_has_one_fails(self):
         assert not self.response.has_one("div#fumble")
 
+    def test_has_one_xpath(self):
+        assert self.response.has_one(XPath("//div[@id='foo']"))
+
     def test_all(self):
         els = self.response.all("div")
         assert len(els) == 2

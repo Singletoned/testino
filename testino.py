@@ -170,7 +170,8 @@ class Response(object):
         return els[0]
 
     def has_one(self, selector):
-        selector = HTMLTranslator().css_to_xpath(selector)
+        if not isinstance(selector, XPath):
+            selector = HTMLTranslator().css_to_xpath(selector)
         els = self.lxml.xpath(selector)
         return len(els) == 1
 
