@@ -69,9 +69,11 @@ class XPath(str):
 
 
 class BaseAgent(object):
-    def __init__(self, base_url):
+    def __init__(self, base_url, session=None):
         self.base_url = base_url
-        self.session = requests.Session()
+        if not session:
+            session = requests.Session()
+        self.session = session
         self.session.hooks = {"response": self.make_response}
 
     def get(self, url, data=None, **kwargs):
