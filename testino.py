@@ -131,6 +131,10 @@ class Response(object):
         else:
             self.lxml = None
 
+    @property
+    def url(self):
+        return self.response.url
+
     def __getattr__(self, key):
         return getattr(self.response, key)
 
